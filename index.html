@@ -97,9 +97,25 @@
   //   console.log('MAX VAL: ' + value);
   // });
   $(document).ready(function(){
-    $("#forward").click(function(){
+    var twist = new ROSLIB.Message({
+      linear : {
+        x : 0.0,
+        y : 0.0,
+        z : 0.0
+      },
+      angular : {
+        x : 0.0,
+        y : 0.0,
+        z : 0.0
+      }
+    });
+    $('html').hover(function(){
+      console.log('html');
+    });
+
+    $("#forward").hover(function(){
       console.log('forward');
-      var twist = new ROSLIB.Message({
+      twist = new ROSLIB.Message({
         linear : {
           x : 0.5,
           y : 0.0,
@@ -113,11 +129,44 @@
       });
       cmdVel.publish(twist);
     });
-    $("#back").click(function(){
+    $("#forward").mouseleave(function(){
+      console.log('stop');
+      twist = new ROSLIB.Message({
+        linear : {
+          x : 0.0,
+          y : 0.0,
+          z : 0.0
+        },
+        angular : {
+          x : 0.0,
+          y : 0.0,
+          z : 0.0
+        }
+      });
+      cmdVel.publish(twist);
+    });
+
+    $("#back").hover(function(){
       console.log('back');
-      var twist = new ROSLIB.Message({
+      twist = new ROSLIB.Message({
         linear : {
           x : -0.5,
+          y : 0.0,
+          z : 0.0
+        },
+        angular : {
+          x : 0.0,
+          y : 0.0,
+          z : 0.0
+        }
+      });
+      cmdVel.publish(twist);
+    });
+    $("#back").mouseleave(function(){
+      console.log('stop');
+      twist = new ROSLIB.Message({
+        linear : {
+          x : 0.0,
           y : 0.0,
           z : 0.0
         },
@@ -138,7 +187,8 @@
 <body>
   <h1>Simple roslib Example</h1>
   <p>Check your Web Console for output.</p>
-  <div id="forward" class="button"></div>
-  <div id="back" class="button"></div>
+  <img src="http://www.clipartbest.com/cliparts/RiG/zx7/RiGzx7BiL.png" id="forward" class="button"></img>
+  <br>
+  <img src="https://cdn4.iconfinder.com/data/icons/defaulticon/icons/png/256x256/arrow-down.png" id="back" class="button"></img>
 </body>
 </html>
