@@ -14,10 +14,15 @@
   }
 </style>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-
+<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
+<script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
 <script type="text/javascript" type="text/javascript">
+
+
   // Connecting to ROS
   // -----------------
+
 
   var ros = new ROSLIB.Ros({
     url : 'ws://localhost:9090'
@@ -101,6 +106,7 @@
     var down = false;
     var right = false;
     var left = false;
+    var speed = 0.0;
 
     var twist = new ROSLIB.Message({
       linear : {
@@ -145,23 +151,34 @@
       left = false;
     });
 
-
+    $("#slider").slider();
+    var startPos = '$("#slider").slider("value");', 
+        endPos = '';
+    $("#slider").on("slidestop", function(event, ui) {
+        endPos = ui.value;
+        console.log(ui.value);
+        if (startPos != endPos) {
+            console.log(endPos/100.0);
+            speed = endPos/100.0;
+        }
+        startPos = endPos;
+    });
 
     setInterval(function(){
       var linearX = 0.0;
       var angularZ = 0.0;
 
       if(up){
-        linearX = 0.5;
+        linearX = speed;
       }
       if(down){
-        linearX = -0.5;
+        linearX = -speed;
       }
       if(right){
-        angularZ = -0.5;
+        angularZ = -speed;
       }
       if(left){
-        angularZ = 0.5;
+        angularZ = speed;
       }
 
       twist = new ROSLIB.Message({
@@ -178,13 +195,12 @@
       });
       cmdVel.publish(twist);
     }, 50)
-  })
-
-
+});
 </script>
 </head>
 
 <body>
+
   <h1>Simple roslib Example</h1>
   <p>Check your Web Console for output.</p>
   <img src="http://www.clipartbest.com/cliparts/RiG/zx7/RiGzx7BiL.png" id="forward" class="button"></img>
@@ -195,5 +211,7 @@
   <img src="https://cdn4.iconfinder.com/data/icons/defaulticon/icons/png/256x256/arrow-down.png" id="back" class="button"></img>
 
   <img src="http://www.birdlist.org/images/blue_button_right.jpg" id="right" class="button"></img>
+
+  <div id="slider"></div>
 </body>
 </html>
