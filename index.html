@@ -10,7 +10,15 @@
   .button{
     width: 100px;
     height: 100px;
-    border: 1px solid black;
+    border: none;
+  }
+
+  #forward{
+    margin-left: 106px;
+  }
+
+  #back{
+    margin-left: 106px;
   }
 </style>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
@@ -64,43 +72,6 @@
     listener.unsubscribe();
   });
 
-  // Calling a service
-  // -----------------
-
-  // var addTwoIntsClient = new ROSLIB.Service({
-  //   ros : ros,
-  //   name : '/add_two_ints',
-  //   serviceType : 'rospy_tutorials/AddTwoInts'
-  // });
-
-  // var request = new ROSLIB.ServiceRequest({
-  //   a : 1,
-  //   b : 2
-  // });
-
-  // addTwoIntsClient.callService(request, function(result) {
-  //   console.log('Result for service call on '
-  //     + addTwoIntsClient.name
-  //     + ': '
-  //     + result.sum);
-  // });
-
-  // // Getting and setting a param value
-  // // ---------------------------------
-
-  // ros.getParams(function(params) {
-  //   console.log(params);
-  // });
-
-  // var maxVelX = new ROSLIB.Param({
-  //   ros : ros,
-  //   name : 'max_vel_y'
-  // });
-
-  // maxVelX.set(0.8);
-  // maxVelX.get(function(value) {
-  //   console.log('MAX VAL: ' + value);
-  // });
   $(document).ready(function(){
     var up = false;
     var down = false;
@@ -170,15 +141,31 @@
 
       if(up){
         linearX = speed;
+        $('#forward').attr("src", "img/topH.png")
+      }else{
+        $('#forward').attr("src", "img/top.png")
       }
+
       if(down){
         linearX = -speed;
+        linearX = -0.5;
+        $('#back').attr("src", "img/downH.png")
+      }else{
+        $('#back').attr("src", "img/down.png")
       }
+
       if(right){
         angularZ = -speed;
+        $('#right').attr("src", "img/rightH.png")
+      }else{
+        $('#right').attr("src", "img/right.png")
       }
+
       if(left){
         angularZ = speed;
+        $('#left').attr("src", "img/leftH.png")
+      }else{
+        $('#left').attr("src", "img/left.png")
       }
 
       twist = new ROSLIB.Message({
@@ -203,14 +190,17 @@
 
   <h1>Simple roslib Example</h1>
   <p>Check your Web Console for output.</p>
-  <img src="http://www.clipartbest.com/cliparts/RiG/zx7/RiGzx7BiL.png" id="forward" class="button"></img>
+  <img src="img/top.png" id="forward" class="button"></img>
+  <br>
+  <img src="img/left.png" id="left" class="button"></img>
+
+  <img class="button"></img>
+
+  <img src="img/right.png" id="right" class="button"></img>
+
   <br>
 
-  <img src="http://www.wpclipart.com/signs_symbol/button/metal_buttons/arrow_button_metal_gold_left.png" id="left" class="button"></img>
-
-  <img src="https://cdn4.iconfinder.com/data/icons/defaulticon/icons/png/256x256/arrow-down.png" id="back" class="button"></img>
-
-  <img src="http://www.birdlist.org/images/blue_button_right.jpg" id="right" class="button"></img>
+  <img src="img/down.png" id="back" class="button"></img>
 
   <div id="slider"></div>
 </body>
