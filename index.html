@@ -97,6 +97,11 @@
   //   console.log('MAX VAL: ' + value);
   // });
   $(document).ready(function(){
+    var up = false;
+    var down = false;
+    var right = false;
+    var left = false;
+
     var twist = new ROSLIB.Message({
       linear : {
         x : 0.0,
@@ -109,75 +114,70 @@
         z : 0.0
       }
     });
-    $('html').hover(function(){
-      console.log('html');
-    });
+    cmdVel.publish(twist);
 
-    $("#forward").hover(function(){
+    $("#forward").mouseenter(function(){
       console.log('forward');
-      twist = new ROSLIB.Message({
-        linear : {
-          x : 0.5,
-          y : 0.0,
-          z : 0.0
-        },
-        angular : {
-          x : 0.0,
-          y : 0.0,
-          z : 0.0
-        }
-      });
-      cmdVel.publish(twist);
-    });
-    $("#forward").mouseleave(function(){
-      console.log('stop');
-      twist = new ROSLIB.Message({
-        linear : {
-          x : 0.0,
-          y : 0.0,
-          z : 0.0
-        },
-        angular : {
-          x : 0.0,
-          y : 0.0,
-          z : 0.0
-        }
-      });
-      cmdVel.publish(twist);
+      up = true;
     });
 
     $("#back").hover(function(){
       console.log('back');
-      twist = new ROSLIB.Message({
-        linear : {
-          x : -0.5,
-          y : 0.0,
-          z : 0.0
-        },
-        angular : {
-          x : 0.0,
-          y : 0.0,
-          z : 0.0
-        }
-      });
-      cmdVel.publish(twist);
+      down = true;
     });
-    $("#back").mouseleave(function(){
+
+    $("#right").hover(function(){
+      console.log('right');
+      right = true;
+    });
+
+    $("#left").hover(function(){
+      console.log('left');
+      left = true;
+    });
+
+
+    $(".button").mouseleave(function(){
       console.log('stop');
+      up = false;
+      down = false;
+      right = false;
+      left = false;
+    });
+
+
+
+    setInterval(function(){
+      var linearX = 0.0;
+      var angularZ = 0.0;
+
+      if(up){
+        linearX = 0.5;
+      }
+      if(down){
+        linearX = -0.5;
+      }
+      if(right){
+        angularZ = -0.5;
+      }
+      if(left){
+        angularZ = 0.5;
+      }
+
       twist = new ROSLIB.Message({
         linear : {
-          x : 0.0,
+          x : linearX,
           y : 0.0,
           z : 0.0
         },
         angular : {
           x : 0.0,
           y : 0.0,
-          z : 0.0
+          z : angularZ
         }
       });
       cmdVel.publish(twist);
-    });
+    }, 50)
   })
 
 
@@ -189,6 +189,11 @@
   <p>Check your Web Console for output.</p>
   <img src="http://www.clipartbest.com/cliparts/RiG/zx7/RiGzx7BiL.png" id="forward" class="button"></img>
   <br>
+
+  <img src="http://www.wpclipart.com/signs_symbol/button/metal_buttons/arrow_button_metal_gold_left.png" id="left" class="button"></img>
+
   <img src="https://cdn4.iconfinder.com/data/icons/defaulticon/icons/png/256x256/arrow-down.png" id="back" class="button"></img>
+
+  <img src="http://www.birdlist.org/images/blue_button_right.jpg" id="right" class="button"></img>
 </body>
 </html>
