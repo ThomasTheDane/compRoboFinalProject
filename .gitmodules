@@ -1,0 +1,3 @@
+[submodule "webrtc_ros"]
+	path = webrtc_ros
+	url = https://github.com/RobotWebTools/webrtc_ros
