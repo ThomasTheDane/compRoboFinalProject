@@ -184,6 +184,27 @@
     }, 50)
 });
 </script>
+
+<script>
+  window.addEventListener("load", function(){
+    
+    var gameCanvas = document.getElementById("gameCanvas");
+    var gameContext = gameCanvas.getContext("2d");
+
+    drawVector(100, 100,0, gameContext);
+  }, false);
+
+  function drawVector(x, y, angle, gameContext){
+    var dist = 10;
+    var bottomLeft = gameContext.canvas.height - y;
+    gameContext.beginPath();
+    gameContext.moveTo(x,bottomLeft);
+    gameContext.lineTo(x+dist*Math.cos(angle), bottomLeft-dist*(Math.sin(angle)));
+    gameContext.stroke();
+    gameContext.fill();
+    //gameContext.lineTo(x + Math.cos(angle)*10, y + Math.sin(angle)*10)
+  }
+</script>
 </head>
 
 <body>
@@ -203,5 +224,9 @@
   <img src="img/down.png" id="back" class="button"></img>
 
   <div id="slider"></div>
+
+  <canvas id="gameCanvas" height="500" width="500" style="border: 1px solid grey">
+
+  </canvas>
 </body>
 </html>
