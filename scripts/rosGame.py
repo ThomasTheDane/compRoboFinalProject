@@ -8,7 +8,7 @@
     of the markers on the ceiling of the room """
 
 import rospy
-from rosGame import MarkerProcessor
+from neatoLocation import MarkerProcessor
 
 class Neatobot:
 	"""One player/robot"""
