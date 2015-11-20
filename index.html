@@ -61,16 +61,20 @@
   // Subscribing to a Topic
   // ----------------------
 
-  var listener = new ROSLIB.Topic({
-    ros : ros,
-    name : '/listener',
-    messageType : 'std_msgs/String'
-  });
+  var starPose = new ROSLIB.Topic({
+    ros: ros,
+    name: '/STAR_pose',
+    messageType : 'geometry_msgs/PoseStamped'
+//    name: '/camera/image_raw',
+//    messageType : 'sensor_msgs/Image'
+  })
 
-  listener.subscribe(function(message) {
-    console.log('Received message on ' + listener.name + ': ' + message.data);
-    listener.unsubscribe();
-  });
+  starPose.subscribe(function(message){
+    debugger;
+    //message.pose.position
+    //message.pose.orientation.x/y/z/w
+    console.log('Received message on' + startPose.name + ': ' + message.data);
+  })
 
   $(document).ready(function(){
     var up = false;
