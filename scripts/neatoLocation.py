@@ -106,8 +106,8 @@ class MarkerProcessor(object):
             self.odom_frame_name = "odom"
 
         self.marker_locators = {}
-        self.add_marker_locator(MarkerLocator(0,(0.0,0.0),0))
-        self.add_marker_locator(MarkerLocator(1,(1.4/1.1,2.0/1.1),0))
+        self.add_marker_locator(MarkerLocator(0,(0.0,0.0),pi))
+        self.add_marker_locator(MarkerLocator(1,(-1.83, 0),0))
 
         self.marker_sub = rospy.Subscriber("ar_pose_marker",
                                            ARMarkers,
