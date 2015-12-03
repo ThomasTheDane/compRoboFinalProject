@@ -31,6 +31,11 @@
   // Connecting to ROS
   // -----------------
 
+  const GLOBAL = {
+    x : 0,
+    y : 0, 
+    z : 0
+  }; 
 
   var ros = new ROSLIB.Ros({
     url : 'ws://localhost:9090'
@@ -69,12 +74,27 @@
 //    messageType : 'sensor_msgs/Image'
   })
 
+   var eulerAngle = new ROSLIB.Topic({
+    ros: ros,
+    name: '/STAR_pose_euler_angle',
+    messageType : 'geometry_msgs/Vector3'
+//    name: '/camera/image_raw',
+//    messageType : 'sensor_msgs/Image'
+  })
+
   starPose.subscribe(function(message){
-    debugger;
-    
-    //message.pose.position
-    //message.pose.orientation.x/y/z/w
-    console.log('Received message on' + startPose.name + ': ' + message.data);
+   
+    //console.log('Received message on' + starPose.name + ': ' + message.pose);
+    GLOBAL.x = message.pose.position.x
+    GLOBAL.y = message.pose.position.y
+    // debugger;
+    drawVector(GLOBAL.x,GLOBAL.y, GLOBAL.z)
+  })
+
+  eulerAngle.subscribe(function(message){
+    GLOBAL.z = message.z
+    drawVector(GLOBAL.x,GLOBAL.y, GLOBAL.z)
+    // console.log('Received message on' + eulerAngle.name + ': ' + message);
   })
 
   $(document).ready(function(){
@@ -193,18 +213,28 @@
 <script>
   window.addEventListener("load", function(){
     
-    var gameCanvas = document.getElementById("gameCanvas");
-    var gameContext = gameCanvas.getContext("2d");
 
-    drawVector(100, 100,0, gameContext);
+    //drawVector(100, 100,0, gameContext);
   }, false);
 
-  function drawVector(x, y, angle, gameContext){
-    var dist = 10;
-    var bottomLeft = gameContext.canvas.height - y;
+  function drawVector(x, y, angle){
+    var gameCanvas = document.getElementById("gameCanvas");
+    var gameContext = gameCanvas.getContext("2d");
+    var x = x*100;
+    var y = y*100;
+    // gameContext.clearRect(0,0,gameContext.canvas.width, gameContext.canvas.height)
+    var dist = 20;
+    // var bottomLeftY = -gameContext.canvas.height/2;
+    // var bottomLeftX = -gameContext.canvas.width/2;
+
+    var startX = x+(gameContext.canvas.width/2);
+    var startY = y+(gameContext.canvas.height/2);
+
+    console.log(startX, startY);
     gameContext.beginPath();
-    gameContext.moveTo(x,bottomLeft);
-    gameContext.lineTo(x+dist*Math.cos(angle), bottomLeft-dist*(Math.sin(angle)));
+    gameContext.moveTo(startX,startY);
+    gameContext.lineTo(startX+dist*Math.cos(angle), startY+dist*(Math.sin(angle)));
+
     gameContext.stroke();
     gameContext.fill();
     //gameContext.lineTo(x + Math.cos(angle)*10, y + Math.sin(angle)*10)
