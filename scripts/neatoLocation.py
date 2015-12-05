@@ -12,7 +12,7 @@ from ar_pose.msg import ARMarkers
 from tf.transformations import euler_from_quaternion, rotation_matrix, quaternion_from_matrix, quaternion_from_euler
 import numpy as np
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
+from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion, Vector3
 from std_msgs.msg import Header
 from tf import TransformListener, TransformBroadcaster
 from copy import deepcopy
@@ -115,6 +115,7 @@ class MarkerProcessor(object):
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.process_odom, queue_size=10)
         self.star_pose_pub = rospy.Publisher("STAR_pose",PoseStamped,queue_size=10)
         self.continuous_pose = rospy.Publisher("STAR_pose_continuous",PoseStamped,queue_size=10)
+        self.star_pose_euler_angle_pub = rospy.Publisher("STAR_pose_euler_angle",Vector3,queue_size=10)
         self.tf_listener = TransformListener()
         self.tf_broadcaster = TransformBroadcaster()
 
@@ -127,6 +128,12 @@ class MarkerProcessor(object):
         try:
             STAR_pose = self.tf_listener.transformPose("STAR", p)
             STAR_pose.header.stamp = msg.header.stamp
+            euler_angles = euler_from_quaternion((STAR_pose.pose.orientation.x,
+                                                  STAR_pose.pose.orientation.y,
+                                                  STAR_pose.pose.orientation.z,
+                                                  STAR_pose.pose.orientation.w))
+
+            self.star_pose_euler_angle_pub.publish(Vector3(x=euler_angles[0],y=euler_angles[1],z=euler_angles[2]))
             self.continuous_pose.publish(STAR_pose)
         except Exception as inst:
             print "error is", inst
