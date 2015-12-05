@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 """ This code implements a ceiling-marker based localization system.
-	The code is slightly modified based on the number/kinds of markers 
-	we've decided to use.
     The core of the code is filling out the marker_locators
     which allow for the specification of the position and orientation
     of the markers on the ceiling of the room """
@@ -12,7 +10,7 @@ from ar_pose.msg import ARMarkers
 from tf.transformations import euler_from_quaternion, rotation_matrix, quaternion_from_matrix, quaternion_from_euler
 import numpy as np
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion, Vector3
+from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 from std_msgs.msg import Header
 from tf import TransformListener, TransformBroadcaster
 from copy import deepcopy
@@ -106,8 +104,12 @@ class MarkerProcessor(object):
             self.odom_frame_name = "odom"
 
         self.marker_locators = {}
-        self.add_marker_locator(MarkerLocator(0,(0.0,0.0),pi))
-        self.add_marker_locator(MarkerLocator(1,(-1.83, 0),0))
+        self.add_marker_locator(MarkerLocator(0,(-6*12*2.54/100.0,0),0))
+        self.add_marker_locator(MarkerLocator(1,(0.0,0.0),pi))
+        self.add_marker_locator(MarkerLocator(2,(0.0,10*12*2.54/100.0),0))
+        self.add_marker_locator(MarkerLocator(3,(-6*12*2.54/100.0,6*12*2.54/100.0),0))
+
+        self.pose_correction = rospy.get_param('~pose_correction',0.0)
 
         self.marker_sub = rospy.Subscriber("ar_pose_marker",
                                            ARMarkers,
@@ -115,7 +117,6 @@ class MarkerProcessor(object):
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.process_odom, queue_size=10)
         self.star_pose_pub = rospy.Publisher("STAR_pose",PoseStamped,queue_size=10)
         self.continuous_pose = rospy.Publisher("STAR_pose_continuous",PoseStamped,queue_size=10)
-        self.star_pose_euler_angle_pub = rospy.Publisher("STAR_pose_euler_angle",Vector3,queue_size=10)
         self.tf_listener = TransformListener()
         self.tf_broadcaster = TransformBroadcaster()
 
@@ -128,12 +129,6 @@ class MarkerProcessor(object):
         try:
             STAR_pose = self.tf_listener.transformPose("STAR", p)
             STAR_pose.header.stamp = msg.header.stamp
-            euler_angles = euler_from_quaternion((STAR_pose.pose.orientation.x,
-                                                  STAR_pose.pose.orientation.y,
-                                                  STAR_pose.pose.orientation.z,
-                                                  STAR_pose.pose.orientation.w))
-
-            self.star_pose_euler_angle_pub.publish(Vector3(x=euler_angles[0],y=euler_angles[1],z=euler_angles[2]))
             self.continuous_pose.publish(STAR_pose)
         except Exception as inst:
             print "error is", inst
@@ -147,13 +142,18 @@ class MarkerProcessor(object):
                                                   marker.pose.pose.orientation.z,
                                                   marker.pose.pose.orientation.w))
             angle_diffs = TransformHelpers.angle_diff(euler_angles[0],pi), TransformHelpers.angle_diff(euler_angles[1],0)
-            if (marker.id in self.marker_locators  and #and 2.4 <= marker.pose.pose.position.z <= 2.6
-                fabs(angle_diffs[0]) <= .2 and
-                fabs(angle_diffs[1]) <= .2):
+            print angle_diffs, marker.pose.pose.position.z
+            if (marker.id in self.marker_locators and
+                3.2 <= marker.pose.pose.position.z <= 3.6 and
+                fabs(angle_diffs[0]) <= .4 and
+                fabs(angle_diffs[1]) <= .4):
+                print "FOUND IT!"
                 locator = self.marker_locators[marker.id]
-                xy_yaw = locator.get_camera_position(marker)
+                xy_yaw = list(locator.get_camera_position(marker))
+                xy_yaw[0] += self.pose_correction*cos(xy_yaw[2])
+                xy_yaw[1] += self.pose_correction*sin(xy_yaw[2])
                 orientation_tuple = quaternion_from_euler(0,0,xy_yaw[2])
-                pose = Pose(position=Point(x=xy_yaw[0],y=xy_yaw[1],z=0),
+                pose = Pose(position=Point(x=-xy_yaw[0],y=-xy_yaw[1],z=0),
                             orientation=Quaternion(x=orientation_tuple[0], y=orientation_tuple[1], z=orientation_tuple[2], w=orientation_tuple[3]))
                 # TODO: use markers timestamp instead of now() (unfortunately, not populated currently by ar_pose)
                 pose_stamped = PoseStamped(header=Header(stamp=rospy.Time.now(),frame_id="STAR"),pose=pose)
