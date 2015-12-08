@@ -176,6 +176,7 @@ class MarkerProcessor(object):
                 pose_stamped_corrected.pose.position.x -= offset[0]*cos(xy_yaw[2])
                 pose_stamped_corrected.pose.position.y -= offset[0]*sin(xy_yaw[2])
                 self.star_pose_pub.publish(pose_stamped_corrected)
+
                 self.fix_STAR_to_odom_transform(pose_stamped_corrected)
 
     def fix_STAR_to_odom_transform(self, msg):
