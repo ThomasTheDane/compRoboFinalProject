@@ -46,7 +46,7 @@ class Neatobot:
         self.cz = 0
         self.theta = 0
 
-        rospy.Subscriber("STAR_pose_euler_angle", Vector3, self.processEulerAngle)  
+        # rospy.Subscriber("STAR_pose_euler_angle", Vector3, self.processEulerAngle)  
         rospy.Subscriber("/camera/image_raw", Image, self.process_image)
         rospy.Subscriber("STAR_pose_continuous",PoseStamped, self.processLocation)
         rospy.Subscriber("camera/camera_info", CameraInfo, self.get_camerainfo)
@@ -61,13 +61,13 @@ class Neatobot:
                                                   msg.pose.orientation.z,
                                                   msg.pose.orientation.w))
         print "theta from processLocation: ", euler_angles
-        self.theta = euler_angles[2]
+        self.theta = -euler_angles[2]
         #TODO
         #print self.cx, self.cy, self.cz
 
-    def processEulerAngle(self, vec3):
+    # def processEulerAngle(self, vec3):
         # self.theta = -vec3.z
-        print "theta from subcrib: ", self.theta
+        # print "theta from subcrib: ", self.theta
         # TODO
         # theta should be negated
 
@@ -80,8 +80,7 @@ class Neatobot:
 
     def pixelate(self, new_coord):
 
-        
-        new_coord = [-new_coord[1,0], -new_coord[2,0], new_coord[0,0]]
+        self.new_coord = [-new_coord[1,0], -new_coord[2,0], new_coord[0,0]]
         print "new_coord after swap",new_coord
         new_coord = np.array([new_coord])
         
@@ -101,8 +100,10 @@ class Neatobot:
 
         self.cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
         if self.pixel !=None :
-            print self.pixel[0], self.pixel[1]
-            cv2.circle(self.cv_image, (int(self.pixel[0]), int(self.pixel[1])), 5, (0, 0, 255))
+            # print self.pixel[0], self.pixel[1]
+            # print  "z coordinate", self.new_coord[2]
+            # if self.new_coord[2] > 0:
+            cv2.circle(self.cv_image, (int(self.pixel[0]), int(self.pixel[1])), 100, (0, 0, 255))
         
         cv2.imshow('video_window', self.cv_image)
         cv2.waitKey(10)
