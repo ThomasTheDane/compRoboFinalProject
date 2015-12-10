@@ -33,7 +33,7 @@ class Neatobot:
         # rospy.init_node('AR')                       # the latest image from the camera
         self.bridge = CvBridge()                    # used to convert ROS messages to OpenCV
         rospy.Subscriber("/camera/image_raw", Image, self.process_image)
-        cv2.namedWindow('ARwindow')
+        cv2.namedWindow('video_window')
         
         rospy.init_node('neato_bot')
         self.cv_image = None                        # the latest image from the camera    
