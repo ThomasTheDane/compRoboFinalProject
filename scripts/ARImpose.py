@@ -10,13 +10,13 @@ class ARStuff(object):
         The node will issue motor commands to move forward while keeping
         the ball in the center of the camera's field of view. """
 
-    def __init__(self, image_topic):
+    def __init__(self):
         """ Initialize the ball tracker """
         rospy.init_node('AR')
         self.cv_image = None                        # the latest image from the camera
         self.bridge = CvBridge()                    # used to convert ROS messages to OpenCV
 
-        rospy.Subscriber(image_topic, Image, self.process_image)
+        rospy.Subscriber("/camera/image_raw", Image, self.process_image)
         cv2.namedWindow('video_window')
         cv2.waitKey(5)
 
