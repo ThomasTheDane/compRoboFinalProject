@@ -56,12 +56,18 @@ class Neatobot:
         self.cx = msg.pose.position.x
         self.cy = msg.pose.position.y
         self.cz = msg.pose.position.z
+        euler_angles = euler_from_quaternion((msg.pose.orientation.x,
+                                                  msg.pose.orientation.y,
+                                                  msg.pose.orientation.z,
+                                                  msg.pose.orientation.w))
+        print "theta from processLocation: ", euler_angles
+        self.theta = euler_angles[2]
         #TODO
         #print self.cx, self.cy, self.cz
 
     def processEulerAngle(self, vec3):
-        self.theta = -vec3.z
-        # print "theta", self.theta
+        # self.theta = -vec3.z
+        print "theta from subcrib: ", self.theta
         # TODO
         # theta should be negated
 
