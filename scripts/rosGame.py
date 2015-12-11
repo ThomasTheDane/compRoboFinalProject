@@ -45,7 +45,7 @@ class Neatobot:
         self.cy = 0
         self.cz = 0
         self.theta = 0
-
+        self.swap_new_coord = None
         # rospy.Subscriber("STAR_pose_euler_angle", Vector3, self.processEulerAngle)  
         rospy.Subscriber("/camera/image_raw", Image, self.process_image)
         rospy.Subscriber("STAR_pose_continuous",PoseStamped, self.processLocation)
@@ -74,22 +74,28 @@ class Neatobot:
     def transformWorldToCamera(self, coord):
         rotat = rotation_matrix(self.theta,[0,0,1])
         trans = np.matrix([[1,0,0,-self.cx],[0,1,0,-self.cy],[0,0,1,-self.cz],[0,0,0,1]])
+
         new_coord = np.dot(rotat, np.dot(trans, coord))
-        # print new_coord[:3]
-        self.pixelate(new_coord[:3])
+        # self.pixelate(new_coord[:3])
+        self.pixelate(new_coord[:,:-1])
 
     def pixelate(self, new_coord):
 
-        self.new_coord = [-new_coord[1,0], -new_coord[2,0], new_coord[0,0]]
-        print "new_coord after swap",new_coord
+    	for i in range(new_coord.shape[0]):
+    		new_coord[i][0]=-new_coord[i][1]
+    		new_coord[i][1]=-new_coord[i][2]
+    		new_coord[i][2]=new_coord[i][0]
+    		
+        # new_coord = [-new_coord[1,0], -new_coord[2,0], new_coord[0,0]]
+        self.swap_new_coord = new_coord
+
         new_coord = np.array([new_coord])
-        
         # points = cv2.projectPoints(new_coord, (0,0,0), (0,0,0), self.K, self.D)
         # self.points = points[0]
-        # print self.K
+        
         p = self.K.dot(new_coord.T)
         self.pixel =  p / p[2]
-        print "self.pixel", self.pixel
+        # print "self.pixel", self.pixel
         
 
     def get_camerainfo(self,msg):
@@ -100,11 +106,11 @@ class Neatobot:
 
         self.cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
         if self.pixel !=None :
-            # print self.pixel[0], self.pixel[1]
-            # print  "z coordinate", self.new_coord[2]
-            # if self.new_coord[2] > 0:
-            cv2.circle(self.cv_image, (int(self.pixel[0]), int(self.pixel[1])), 100, (0, 0, 255))
-        
+            print "self swap coord", self.swap_new_coord
+
+            if self.swap_new_coord[2] > 0:
+	            cv2.circle(self.cv_image,(int(self.pixel[0]), int(self.pixel[1])), 120, (0, 0, 255))
+
         cv2.imshow('video_window', self.cv_image)
         cv2.waitKey(10)
 
@@ -113,12 +119,11 @@ class Neatobot:
         r = rospy.Rate(5)
         while not rospy.is_shutdown():
             if self.theta!=0:
-                coin_coord = np.array([[1], [0], [0], [1]], dtype='float32')
-                # coin_coord = np.array([coin_coord])
+                coin_coord = np.array([[[1], [0], [0], [1]],[[1.5], [0], [0], [1]],[[1.5], [0.5], [0], [1]],[[1], [0.5], [0], [1]]],dtype='float32')
                 self.transformWorldToCamera(coin_coord)
-                # self.transformWorldToCamera([[2],[1],[1],[1]])
             r.sleep()
 
 if __name__ == '__main__':
     nb = Neatobot()
     nb.run()
+k
