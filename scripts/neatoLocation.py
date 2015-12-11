@@ -117,7 +117,7 @@ class MarkerProcessor(object):
         self.odom_sub = rospy.Subscriber("/odom", Odometry, self.process_odom, queue_size=10)
         self.star_pose_pub = rospy.Publisher("STAR_pose",PoseStamped,queue_size=10)
         self.continuous_pose = rospy.Publisher("STAR_pose_continuous",PoseStamped,queue_size=10)
-        self.star_pose_euler_angle_pub = rospy.Publisher("STAR_pose_euler_angle",Vector3,queue_size=10)
+        # self.star_pose_euler_angle_pub = rospy.Publisher("STAR_pose_euler_angle",Vector3,queue_size=10)
         self.tf_listener = TransformListener()
         self.tf_broadcaster = TransformBroadcaster()
 
@@ -135,7 +135,7 @@ class MarkerProcessor(object):
                                                   STAR_pose.pose.orientation.z,
                                                   STAR_pose.pose.orientation.w))
 
-            self.star_pose_euler_angle_pub.publish(Vector3(x=euler_angles[0],y=euler_angles[1],z=euler_angles[2]))
+            # self.star_pose_euler_angle_pub.publish(Vector3(x=euler_angles[0],y=euler_angles[1],z=euler_angles[2]))
             self.continuous_pose.publish(STAR_pose)
         except Exception as inst:
             print "error is", inst

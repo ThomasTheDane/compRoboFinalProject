@@ -7,10 +7,6 @@ import cv2
 import numpy as np
 
 class ARStuff(object):
-    """ The BallTracker is a Python object that encompasses a ROS node 
-        that can process images from the camera and search for a ball within.
-        The node will issue motor commands to move forward while keeping
-        the ball in the center of the camera's field of view. """
 
     def __init__(self):
         """ Initialize the ball tracker """
