@@ -17,6 +17,7 @@ from sensor_msgs.msg import CameraInfo
 from tf import TransformListener, TransformBroadcaster
 from copy import deepcopy
 from math import sin, cos, pi, atan2, fabs
+import rospkg
 
 """ This code implements a ceiling-marker based localization system.
     The code is slightly modified based on the number/kinds of markers 
@@ -30,7 +31,7 @@ class Neatobot:
 
     def __init__(self):
         """ Initialize the ball tracker """
-        # rospy.init_node('AR')                       # the latest image from the camera
+        self.rospack = rospkg.RosPack()
         self.bridge = CvBridge()                    # used to convert ROS messages to OpenCV
         rospy.Subscriber("/camera/image_raw", Image, self.process_image)
         cv2.namedWindow('video_window')
@@ -49,7 +50,7 @@ class Neatobot:
         self.coins = []
         self.coinPixels = []
         self.coinVisible = True
-        # rospy.Subscriber("STAR_pose_euler_angle", Vector3, self.processEulerAngle)  
+ 
         rospy.Subscriber("/camera/image_raw", Image, self.process_image)
         rospy.Subscriber("STAR_pose_continuous",PoseStamped, self.processLocation)
         rospy.Subscriber("camera/camera_info", CameraInfo, self.get_camerainfo)
@@ -101,6 +102,8 @@ class Neatobot:
         new_coord = [-new_coord[1,0], -new_coord[2,0], new_coord[0,0]]
         if new_coord[2] < 0:
         	self.coinVisible = False
+        else:
+            self.coinVisible = True
 
         new_coord = np.array([new_coord])
         # points = cv2.projectPoints(new_coord, (0,0,0), (0,0,0), self.K, self.D)
@@ -110,7 +113,47 @@ class Neatobot:
         return p / p[2]
         # print "self.pixel", self.pixel
     
-    
+    def warpAndCombine(self, sourceImage, destinationPoints, destinationImage):
+        rows, cols, _ = sourceImage.shape
+        sourcePoints = np.float32([[0,0], [cols, 0],[0, rows], [cols, rows]])
+        destinationPoints = np.float32(destinationPoints)
+        M = cv2.getPerspectiveTransform(sourcePoints, destinationPoints)
+
+        newWidth = max([destinationPoints[1][0], destinationPoints[3][0]])
+        newHeight = max([destinationPoints[2][1], destinationPoints[3][1]])
+        warpedImage = cv2.warpPerspective(sourceImage, M, (newWidth, newHeight))
+
+        #if warpedImage[0,0][0] == 0 and warpedImage[0,0][1] == 0 and warpedImage[0,0][2] == 0:
+
+        finalImage = destinationImage
+
+        # Load two images
+
+        finalImage = self.overlayImages(finalImage, warpedImage)
+
+        return finalImage
+
+    def overlayImages(self, img1, img2):
+
+        # I want to put logo on top-left corner, So I create a ROI
+        rows,cols,channels = img2.shape
+        roi = img1[0:rows, 0:cols ]
+
+        # Now create a mask of logo and create its inverse mask also
+        img2gray = cv2.cvtColor(img2,cv2.COLOR_BGR2GRAY)
+        ret, mask = cv2.threshold(img2gray, 10, 255, cv2.THRESH_BINARY)
+        mask_inv = cv2.bitwise_not(mask)
+
+        # Now black-out the area of logo in ROI
+        img1_bg = cv2.bitwise_and(roi,roi,mask = mask_inv)
+
+        # Take only region of logo from logo image.
+        img2_fg = cv2.bitwise_and(img2,img2,mask = mask)
+
+        # Put logo in ROI and modify the main image
+        dst = cv2.add(img1_bg,img2_fg)
+        img1[0:rows, 0:cols ] = dst
+        return img1
 
     def get_camerainfo(self,msg):
         self.D = msg.D
@@ -122,10 +165,15 @@ class Neatobot:
 
         if self.coinPixels:
             for aCoin in self.coinPixels:
-                for aPixel in aCoin:
-
-                    if self.coinVisible:
-                        cv2.circle(self.cv_image,(int(aPixel[0]), int(aPixel[1])), 20, (0, 0, 255))
+                toCoord = []
+                print "aCoin: ", aCoin
+                if self.coinVisible:                    
+                    #img = self.warpAndCombine(cv2.imread("coin.png", 1), , self.cv_image)
+                    for aPixel in aCoin:
+                        toCoord.append([aPixel[0], aPixel[1]])
+                        cv2.circle(self.cv_image,(int(aPixel[0]), int(aPixel[1])), 5, (0, 0, 255))
+                    #print(cv2.imread(self.rospack.get_path('finalproject') + "/scripts/coin.png", 1))
+                    self.cv_image = self.warpAndCombine(cv2.imread(self.rospack.get_path('finalproject') + "/scripts/coin.png", 1), toCoord, self.cv_image)
 
         cv2.imshow('video_window', self.cv_image)
         cv2.waitKey(10)
@@ -136,6 +184,8 @@ class Neatobot:
         while not rospy.is_shutdown():
             if self.theta!=0:
                 coin_coord = np.array([[[1], [0], [0], [1]],[[1], [0], [.2], [1]],[[1], [.2], [0], [1]],[[1], [.2], [.2], [1]]],dtype='float32')
+#                coin_coord = np.array([[[1], [.2], [.2], [1]],[[1], [0], [.2], [1]],[[1], [.2], [0], [1]],[[1], [0], [0], [1]]],dtype='float32')
+
                 self.transformWorldToCamera(coin_coord)
             r.sleep()
 
