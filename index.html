@@ -138,6 +138,37 @@
       left = true;
     });
 
+    document.onkeypress = function(e){
+      if(e.keyCode == 119){
+        up = true
+      }
+      if(e.keyCode == 97){
+        left = true
+      }
+      if(e.keyCode == 115){
+        down = true
+      }
+      if(e.keyCode == 100){
+        right = true
+      }
+    }
+
+    document.onkeyup = function(e){
+      console.log(e)
+      if(e.keyCode == 87){
+        up = false
+      }
+      if(e.keyCode == 65){
+        left = false
+      }
+      if(e.keyCode == 83){
+        down = false
+      }
+      if(e.keyCode == 68){
+        right = false
+      }
+    }
+
 
     $(".button").mouseleave(function(){
       console.log('stop');
