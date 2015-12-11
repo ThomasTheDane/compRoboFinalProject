@@ -114,6 +114,8 @@ class Neatobot:
         cv2.imshow('video_window', self.cv_image)
         cv2.waitKey(10)
 
+    def 
+
     def run(self):
         """ The main run loop, in this node it doesn't do anything """
         r = rospy.Rate(5)
