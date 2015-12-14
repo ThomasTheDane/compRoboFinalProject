@@ -18,6 +18,7 @@ from tf import TransformListener, TransformBroadcaster
 from copy import deepcopy
 from math import sin, cos, pi, atan2, fabs
 import rospkg
+import math
 
 """ This code implements a ceiling-marker based localization system.
     The code is slightly modified based on the number/kinds of markers 
@@ -94,14 +95,14 @@ class Neatobot:
 
     def pixelate(self, new_coord):
 
-    	# for i in range(new_coord.shape[0]): 
-    	# 	b[i][0]=-new_coord[i][1]
-    	# 	b[i][1]=-new_coord[i][2]
-    	# 	b[i][2]= new_coord[i][0]
-    		
+        # for i in range(new_coord.shape[0]): 
+        #   b[i][0]=-new_coord[i][1]
+        #   b[i][1]=-new_coord[i][2]
+        #   b[i][2]= new_coord[i][0]
+            
         new_coord = [-new_coord[1,0], -new_coord[2,0], new_coord[0,0]]
         if new_coord[2] < 0:
-        	self.coinVisible = False
+            self.coinVisible = False
         else:
             self.coinVisible = True
 
@@ -113,6 +114,23 @@ class Neatobot:
         return p / p[2]
         # print "self.pixel", self.pixel
     
+    def rotatePoints(self,points,theta):
+        midline = [points[0][0][0] + ((points[1][0][0] - points[0][0][0]) / 2.0), points[0][1][0] + ((points[1][1][0] - points[0][1][0]) / 2.0)]
+        print "midline", midline
+        imageWidth = 0.2
+        print "width" , imageWidth  
+        #        for i in range(len(points)):
+        points[0][0] = midline[0] - (math.cos(theta)*(imageWidth/2))
+        points[0][1] = midline[1] + (math.sin(theta)*(imageWidth/2))
+        points[1][0] = midline[0] + (math.cos(theta)*(imageWidth/2))
+        points[1][1] = midline[1] + (math.sin(theta)*(imageWidth/2))
+        points[2][0] = midline[0] - (math.cos(theta)*(imageWidth/2))
+        points[2][1] = midline[1] - (math.sin(theta)*(imageWidth/2))
+        points[3][0] = midline[0] + (math.cos(theta)*(imageWidth/2))
+        points[3][1] = midline[1] - (math.sin(theta)*(imageWidth/2))
+            
+        return points
+
     def warpAndCombine(self, sourceImage, destinationPoints, destinationImage):
         rows, cols, _ = sourceImage.shape
         sourcePoints = np.float32([[0,0], [cols, 0],[0, rows], [cols, rows]])
@@ -180,13 +198,19 @@ class Neatobot:
 
     def run(self):
         """ The main run loop, in this node it doesn't do anything """
-        r = rospy.Rate(5)
+        r = rospy.Rate(10)
+        thetaIncrement = math.pi/30
+        theta = math.pi/2
         while not rospy.is_shutdown():
             if self.theta!=0:
                 coin_coord = np.array([[[1], [0], [0], [1]],[[1], [0], [.2], [1]],[[1], [.2], [0], [1]],[[1], [.2], [.2], [1]]],dtype='float32')
 #                coin_coord = np.array([[[1], [.2], [.2], [1]],[[1], [0], [.2], [1]],[[1], [.2], [0], [1]],[[1], [0], [0], [1]]],dtype='float32')
-
-                self.transformWorldToCamera(coin_coord)
+                
+                rotated = self.rotatePoints(coin_coord, theta)
+                theta += thetaIncrement
+                # pix = self.pixelate
+                print "rotated", rotated
+                self.transformWorldToCamera(rotated)
             r.sleep()
 
 if __name__ == '__main__':
