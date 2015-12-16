@@ -12,12 +12,13 @@ from neatoLocation import MarkerProcessor
 from ar_pose.msg import ARMarkers
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
-from std_msgs.msg import Header
-from sensor_msgs.msg import CameraInfo
+from std_msgs.msg import Header, Int32
+from sensor_msgs.msg import CameraInfo,
 from tf import TransformListener, TransformBroadcaster
 from copy import deepcopy
 from math import sin, cos, pi, atan2, fabs
 import rospkg
+import math
 
 """ 
 This class gets the location of the robot in world, transforms into camera, and projects the 
@@ -56,12 +57,16 @@ class Neatobot:
         rospy.Subscriber("/camera/image_raw", Image, self.process_image)
         rospy.Subscriber("STAR_pose_continuous",PoseStamped, self.processLocation)
         rospy.Subscriber("camera/camera_info", CameraInfo, self.get_camerainfo)
+        self.score = rospy.Publisher("score",Int32,queue_size=10)
         
         """
         def processLocation(self,msg):
         A callBack function for STAR_pose_continuous which saves the location of the robot
         in the world coordinate system, calculates and save the angle of robot's Header
         """
+    # def calculateScore(self, location):
+    #     # if location[0]
+    #     self.continuous_pose.publish(STAR_pose)
     def processLocation(self,msg):
         #from the STAR_pose_continuous, get the location of robot in world
         self.cx = msg.pose.position.x
@@ -98,6 +103,7 @@ class Neatobot:
             aCoinPixels.append(self.pixelate(new_coord[:3]))
         #append to the array which takes an array for each coin
         self.coinPixels.append(aCoinPixels)
+
         
         """
         pixelate(self, new_coord):
@@ -125,8 +131,8 @@ class Neatobot:
         """
     def rotatePoints(self,points,theta):
         #calculate the midpoint of an image
-        # midline= [1.1,0]
-        midline = [points[0][0][0] + ((points[1][0][0] - points[0][0][0]) / 2.0), points[0][1][0] + ((points[1][1][0] - points[0][1][0]) / 2.0)]
+        midline= [1.1,0]
+        # midline = [points[0][0][0] + ((points[1][0][0] - points[0][0][0]) / 2.0), points[0][1][0] + ((points[1][1][0] - points[0][1][0]) / 2.0)]
         
         #TODO
         #define the imagewidth, and will be changed to non-hardcoded value later
@@ -137,10 +143,10 @@ class Neatobot:
         points[0][1] = midline[1] + (math.sin(theta)*(imageWidth*math.sqrt(2)/2))
         points[1][0] = midline[0] + (math.cos(theta)*(imageWidth*math.sqrt(2)/2))
         points[1][1] = midline[1] + (math.sin(theta)*(imageWidth*math.sqrt(2)/2))
-        points[2][0] = midline[0] + (math.cos(theta+pi)*(imageWidth*math.sqrt(2)/2))
-        points[2][1] = midline[1] + (math.sin(theta+pi)*(imageWidth*math.sqrt(2)/2))
-        points[3][0] = midline[0] + (math.cos(theta+pi)*(imageWidth*math.sqrt(2)/2))
-        points[3][1] = midline[1] + (math.sin(theta+pi)*(imageWidth*math.sqrt(2)/2))
+        points[2][0] = midline[0] + (math.cos(theta+math.pi)*(imageWidth*math.sqrt(2)/2))
+        points[2][1] = midline[1] + (math.sin(theta+math.pi)*(imageWidth*math.sqrt(2)/2))
+        points[3][0] = midline[0] + (math.cos(theta+math.pi)*(imageWidth*math.sqrt(2)/2))
+        points[3][1] = midline[1] + (math.sin(theta+math.pi)*(imageWidth*math.sqrt(2)/2))
             
         return points
 
@@ -263,17 +269,17 @@ class Neatobot:
     def run(self):
         """ The main run loop, in this node it doesn't do anything """
         r = rospy.Rate(10)
-        thetaIncrement = math.pi/15
-        theta = math.pi/2
+        thetaIncrement = pi/15
+        theta = pi/2
         while not rospy.is_shutdown():
             try:
                 coin_coord = np.array([[[1], [0], [0], [1]],[[1], [0], [.2], [1]],[[1], [.2], [0], [1]],[[1], [.2], [.2], [1]]],dtype='float32')
                 # coin_coord = np.array([[[1], [.2], [.2], [1]],[[1], [0], [.2], [1]],[[1], [.2], [0], [1]],[[1], [0], [0], [1]]],dtype='float32')
                 
-                #takes the coordinate in the world and rotate it by theta
-                #rotated is a coordinates in the world
+                # takes the coordinate in the world and rotate it by theta
+                # rotated is a coordinates in the world
                 rotated = self.rotatePoints(coin_coord, theta)
-                theta +=thetaIncrement
+                theta += thetaIncrement
                 #this function does the transformation in between coordinate system, and objects' pixelated values
                 #save it in an array of objects
                 self.transformWorldToCamera(rotated)
