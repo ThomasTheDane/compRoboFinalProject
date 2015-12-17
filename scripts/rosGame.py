@@ -55,10 +55,11 @@ class Neatobot:
         self.coinVisible = True
         self.score=0
         self.coinInWorld = [] # needs to be initialized 
-
+        self.mudInWorld = [] # mud coordinate
         rospy.Subscriber("/camera/image_raw", Image, self.process_image)
         rospy.Subscriber("STAR_pose_continuous",PoseStamped, self.processLocation)
         rospy.Subscriber("/camera/camera_info", CameraInfo, self.get_camerainfo)
+        self.vel_pub = rospy.Publisher("mud", Twist, queue_size=1)
         self.score_pub = rospy.Publisher("score", Int32, queue_size=1)
         
         """
@@ -66,13 +67,25 @@ class Neatobot:
         A callBack function for STAR_pose_continuous which saves the location of the robot
         in the world coordinate system, calculates and save the angle of robot's Header
         """
-    def calculateScore(self, x,y):
+    def checkScore(self, x,y):
         padding = 0.2
         for i, coin in enumerate(self.coinInWorld):
             if abs(x-coin[0]) < padding and abs(y-coin[1]) < padding:
                 self.score+=1
                 self.coinInWorld.pop(i)
                 self.score_pub.publish(Int32(self.score))
+
+    def checkMud(self, x,y):
+        padding = 0.3
+        for i, mud in enumerate(self.mudInWorld):
+            if abs(x-coin[0]) < padding and abs(y-coin[1]) < padding:
+                velocity_msg = Twist(linear=Vector3(x-=.1))
+                self.vel_pub.publish(velocity_msg)
+
+    def checkStatus(self,x,y):
+        self.checkScore(x,y)
+        self.checkMud(x,y)
+        
 
     def processLocation(self,msg):
         #from the STAR_pose_continuous, get the location of robot in world
@@ -87,8 +100,8 @@ class Neatobot:
                                                   msg.pose.orientation.w))
         print "theta from processLocation: ", euler_angles
         self.theta = -euler_angles[2]
-
-        self.calculateScore(self.cx, self.cy)
+        self.checkStatus(self.cx, self.cy)
+       
 
         """
         def transformWorldToCamera(self, aCoin):
@@ -242,7 +255,6 @@ class Neatobot:
         
         """
     def process_image(self,msg):
-
         self.cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
 
         """
@@ -272,7 +284,7 @@ class Neatobot:
 
     def centerToCorners(self,center):
         width = 0.2 
-        return np.array([[[center[0]],[center[1]],[0],[1]],[[center[0]],[ceneter[1]],[width],[1]],[[center[0]],[center[1]+width],[0],[1]],[[center[0]],[center[1]+width],[width],[1]]])
+        return np.array([[[center[0]],[center[1]],[0],[1]],[[center[0]],[center[1]],[width],[1]],[[center[0]],[center[1]+width],[0],[1]],[[center[0]],[center[1]+width],[width],[1]]])
 
         """
         def run(self):
