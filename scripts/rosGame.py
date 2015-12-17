@@ -53,20 +53,27 @@ class Neatobot:
         self.coins = []
         self.coinPixels = []
         self.coinVisible = True
- 
+        self.score=0
+        self.coinInWorld = [] # needs to be initialized 
+
         rospy.Subscriber("/camera/image_raw", Image, self.process_image)
         rospy.Subscriber("STAR_pose_continuous",PoseStamped, self.processLocation)
         rospy.Subscriber("camera/camera_info", CameraInfo, self.get_camerainfo)
-        self.score = rospy.Publisher("score",Int32,queue_size=10)
+        self.score_pub = rospy.Publisher("score", Int32, queue_size=10)
         
         """
         def processLocation(self,msg):
         A callBack function for STAR_pose_continuous which saves the location of the robot
         in the world coordinate system, calculates and save the angle of robot's Header
         """
-    # def calculateScore(self, location):
-    #     # if location[0]
-    #     self.continuous_pose.publish(STAR_pose)
+    def calculateScore(self, x,y):
+        padding = 0.2
+        for coin in self.coinInWorld:
+            if abs(x-coin[0]) < padding and abs(y-coin[1]) < padding:
+                self.score+=1
+        
+        self.score_pub.publish(Int32(self.score))
+
     def processLocation(self,msg):
         #from the STAR_pose_continuous, get the location of robot in world
         self.cx = msg.pose.position.x
@@ -80,6 +87,8 @@ class Neatobot:
                                                   msg.pose.orientation.w))
         print "theta from processLocation: ", euler_angles
         self.theta = -euler_angles[2]
+
+        calculateScore(self.cx, self.cy)
 
         """
         def transformWorldToCamera(self, aCoin):
@@ -244,7 +253,7 @@ class Neatobot:
         
         """
     def render_coin(self):
-    	cur_image = np.array(self.cv_image).copy()
+        cur_image = np.array(self.cv_image).copy()
 
         if self.coinPixels:
             for aCoin in self.coinPixels:
@@ -262,6 +271,11 @@ class Neatobot:
         cv2.imshow('video_window', cur_image)
         cv2.waitKey(10)
 
+
+    def centerToCorners(center):
+        width = 0.2 
+        return np.array([[[center[0]],[0],[0],[1]],[[center[0]],[0],[width],[1]],[[center[0]],[center[1]+width],[0],[1]],[[center[0]],[center[1]+width],[width],[1]]])
+
         """
         def run(self):
         This function executes the program 
@@ -271,11 +285,16 @@ class Neatobot:
         r = rospy.Rate(10)
         thetaIncrement = pi/15
         theta = pi/2
+
+        centerOfCoin  = [1,0]
+        self.coinInWorld.append(centerOfCoin)
+        # center is not actually center it will be left bottom corner
+        coin_coord = centerToCorners(centerOfCoin)
+        # coin_coord = np.array([[[1], [0], [0], [1]],[[1], [0], [.2], [1]],[[1], [.2], [0], [1]],[[1], [.2], [.2], [1]]],dtype='float32')
+        
+
         while not rospy.is_shutdown():
             try:
-                coin_coord = np.array([[[1], [0], [0], [1]],[[1], [0], [.2], [1]],[[1], [.2], [0], [1]],[[1], [.2], [.2], [1]]],dtype='float32')
-                # coin_coord = np.array([[[1], [.2], [.2], [1]],[[1], [0], [.2], [1]],[[1], [.2], [0], [1]],[[1], [0], [0], [1]]],dtype='float32')
-                
                 # takes the coordinate in the world and rotate it by theta
                 # rotated is a coordinates in the world
                 rotated = self.rotatePoints(coin_coord, theta)
