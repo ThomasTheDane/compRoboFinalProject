@@ -68,30 +68,40 @@
 
   var starPose = new ROSLIB.Topic({
     ros: ros,
-    name: '/STAR_pose',
+    name: '/cam_up/STAR_pose',
     messageType : 'geometry_msgs/PoseStamped'
 //    name: '/camera/image_raw',
 //    messageType : 'sensor_msgs/Image'
   })
 
-   var eulerAngle = new ROSLIB.Topic({
+ var eulerAngle = new ROSLIB.Topic({
     ros: ros,
-    name: '/STAR_pose_euler_angle',
+    name: '/cam_up/STAR_pose_euler_angle',
     messageType : 'geometry_msgs/Vector3'
 //    name: '/camera/image_raw',
 //    messageType : 'sensor_msgs/Image'
   })
 
+  var score = new ROSLIB.Topic({
+   ros: ros,
+   name: '/cam_up/score',
+   messageType : 'std_msgs/Int32'
+//    name: '/camera/image_raw',
+//    messageType : 'sensor_msgs/Image'
+ })
+
   starPose.subscribe(function(message){
-   
-    //console.log('Received message on' + starPose.name + ': ' + message.pose);
-    GLOBAL.x = message.pose.position.x
-    GLOBAL.y = message.pose.position.y
-    // debugger;
-    drawVector(GLOBAL.x,GLOBAL.y, GLOBAL.z)
+    console.log('starpose ' + starPose.name + ': ' + message.pose);
+    console.log("data is " + message.data)
+  })
+
+  score.subscribe(function(message){
+    console.log("score is " + message.data )
+    updateScore(message.data)
   })
 
   eulerAngle.subscribe(function(message){
+    console.log("eulerAngle is " + message.data)
     GLOBAL.z = message.z
     drawVector(GLOBAL.x,GLOBAL.y, GLOBAL.z)
     // console.log('Received message on' + eulerAngle.name + ': ' + message);
@@ -208,6 +218,7 @@
       cmdVel.publish(twist);
     }, 50)
 });
+
 </script>
 
 <script>
@@ -216,6 +227,12 @@
 
     //drawVector(100, 100,0, gameContext);
   }, false);
+
+  function updateScore(newscore){
+    document.getElementById("score").innerHTML= newscore.toString();
+    var audio = new Audio('Mario-coin-sound.mp3');
+  audio.play();
+  }
 
   function drawVector(x, y, angle){
     var gameCanvas = document.getElementById("gameCanvas");
@@ -246,6 +263,9 @@
 
   <h1>Simple roslib Example</h1>
   <p>Check your Web Console for output.</p>
+
+  <div id="score">0</div>
+
   <img src="img/top.png" id="forward" class="button"></img>
   <br>
   <img src="img/left.png" id="left" class="button"></img>
@@ -261,7 +281,7 @@
   <div id="slider"></div>
 
   <canvas id="gameCanvas" height="500" width="500" style="border: 1px solid grey">
-
   </canvas>
+
 </body>
 </html>
