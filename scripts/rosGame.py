@@ -13,7 +13,7 @@ from ar_pose.msg import ARMarkers
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 from std_msgs.msg import Header, Int32
-from sensor_msgs.msg import CameraInfo,
+from sensor_msgs.msg import CameraInfo
 from tf import TransformListener, TransformBroadcaster
 from copy import deepcopy
 from math import sin, cos, pi, atan2, fabs
@@ -44,7 +44,7 @@ class Neatobot:
         self.points = None
         self.pixel = None
         self.D= 0
-        self.K= 0
+        self.K= None
         self.cx = 0
         self.cy = 0
         self.cz = 0
@@ -58,8 +58,8 @@ class Neatobot:
 
         rospy.Subscriber("/camera/image_raw", Image, self.process_image)
         rospy.Subscriber("STAR_pose_continuous",PoseStamped, self.processLocation)
-        rospy.Subscriber("camera/camera_info", CameraInfo, self.get_camerainfo)
-        self.score_pub = rospy.Publisher("score", Int32, queue_size=10)
+        rospy.Subscriber("/camera/camera_info", CameraInfo, self.get_camerainfo)
+        self.score_pub = rospy.Publisher("score", Int32, queue_size=1)
         
         """
         def processLocation(self,msg):
@@ -68,11 +68,11 @@ class Neatobot:
         """
     def calculateScore(self, x,y):
         padding = 0.2
-        for coin in self.coinInWorld:
+        for i, coin in enumerate(self.coinInWorld):
             if abs(x-coin[0]) < padding and abs(y-coin[1]) < padding:
                 self.score+=1
-        
-        self.score_pub.publish(Int32(self.score))
+                self.coinInWorld.pop(i)
+                self.score_pub.publish(Int32(self.score))
 
     def processLocation(self,msg):
         #from the STAR_pose_continuous, get the location of robot in world
@@ -88,7 +88,7 @@ class Neatobot:
         print "theta from processLocation: ", euler_angles
         self.theta = -euler_angles[2]
 
-        calculateScore(self.cx, self.cy)
+        self.calculateScore(self.cx, self.cy)
 
         """
         def transformWorldToCamera(self, aCoin):
@@ -176,11 +176,12 @@ class Neatobot:
         rows, cols, _ = sourceImage.shape
         sourcePoints = np.float32([[0,0], [cols, 0],[0, rows], [cols, rows]])
         destinationPoints = np.float32(destinationPoints)
+        
         M = cv2.getPerspectiveTransform(sourcePoints, destinationPoints)
 
         newWidth = max(destinationPoints[0][0],destinationPoints[1][0],destinationPoints[2][0], destinationPoints[3][0])
         newHeight = max(destinationPoints[0][1],destinationPoints[1][1],destinationPoints[2][1], destinationPoints[3][1])
-        print "newWidth is ", newWidth, "newHeight is ", newHeight
+        # print "newWidth is ", newWidth, "newHeight is ", newHeight
 
         finalImage = destinationImage
 
@@ -204,26 +205,23 @@ class Neatobot:
 
         rows,cols,channels = img2.shape
         roi = img1[0:rows, 0:cols ]
-        cv2.imshow('roi', roi)
-        cv2.waitKey(5)
+        # cv2.imshow('roi', roi)
+        # cv2.waitKey(5)
 
         # Now create a mask of logo and create its inverse mask also
         img2gray = cv2.cvtColor(img2,cv2.COLOR_BGR2GRAY)
         ret, mask = cv2.threshold(img2gray, 10, 255, cv2.THRESH_BINARY)
-        print "rows,cols", rows, cols
+    
         mask = mask[0:roi.shape[0], 0:roi.shape[1]]
         mask_inv = cv2.bitwise_not(mask)
-        print "mask shape",mask_inv.shape
-        print "roi shape", roi.shape
+        
         # Now black-out the area of logo in ROI
         img1_bg = cv2.bitwise_and(roi,roi,mask = mask_inv)
         
-        print "img2.shape", img2.shape
+       
         # Take only region of logo from logo image.
         img2_fg = cv2.bitwise_and(img2,img2,mask = mask)
         
-        print "img2 shape",img1_bg.shape
-
         # Put logo in ROI and modify the main image
         dst = cv2.add(img1_bg,img2_fg)
         img1[0:rows, 0:cols ] = dst
@@ -272,9 +270,9 @@ class Neatobot:
         cv2.waitKey(10)
 
 
-    def centerToCorners(center):
+    def centerToCorners(self,center):
         width = 0.2 
-        return np.array([[[center[0]],[0],[0],[1]],[[center[0]],[0],[width],[1]],[[center[0]],[center[1]+width],[0],[1]],[[center[0]],[center[1]+width],[width],[1]]])
+        return np.array([[[center[0]],[center[1]],[0],[1]],[[center[0]],[ceneter[1]],[width],[1]],[[center[0]],[center[1]+width],[0],[1]],[[center[0]],[center[1]+width],[width],[1]]])
 
         """
         def run(self):
@@ -289,12 +287,13 @@ class Neatobot:
         centerOfCoin  = [1,0]
         self.coinInWorld.append(centerOfCoin)
         # center is not actually center it will be left bottom corner
-        coin_coord = centerToCorners(centerOfCoin)
+        coin_coord = self.centerToCorners(centerOfCoin)
         # coin_coord = np.array([[[1], [0], [0], [1]],[[1], [0], [.2], [1]],[[1], [.2], [0], [1]],[[1], [.2], [.2], [1]]],dtype='float32')
         
 
         while not rospy.is_shutdown():
-            try:
+            if self.K != None and self.cv_image != None:
+            # try:
                 # takes the coordinate in the world and rotate it by theta
                 # rotated is a coordinates in the world
                 rotated = self.rotatePoints(coin_coord, theta)
@@ -304,8 +303,8 @@ class Neatobot:
                 self.transformWorldToCamera(rotated)
                 self.render_coin()
     #           r.sleep()
-            except Exception as inst:
-                print inst
+            # except Exception as inst:
+            #     print inst
 
 if __name__ == '__main__':
     nb = Neatobot()
