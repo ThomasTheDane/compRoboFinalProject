@@ -55,20 +55,38 @@ class Neatobot:
         self.coinPixels = []
         self.coinVisible = True
         self.coinsInWorld = []
- 
-        rospy.Subscriber("/camera/image_raw", Image, self.process_image)
+        self.mudInWorld = []
+        self.score=0
+
         rospy.Subscriber("STAR_pose_continuous",PoseStamped, self.processLocation)
         rospy.Subscriber("camera/camera_info", CameraInfo, self.get_camerainfo)
         self.score_pub = rospy.Publisher("score", Int32, queue_size=1)
-
+        self.vel_pub = rospy.Publisher("mud", Twist, queue_size=1)
         """
         def processLocation(self,msg):
         A callBack function for STAR_pose_continuous which saves the location of the robot
         in the world coordinate system, calculates and save the angle of robot's Header
         """
-    # def calculateScore(self, location):
-    #     # if location[0]
-    #     self.continuous_pose.publish(STAR_pose)
+    def checkScore(self, x,y):
+        padding = 0.2
+        for i, coin in enumerate(self.coinInWorld):
+            if abs(x-coin[0]) < padding and abs(y-coin[1]) < padding:
+                self.score+=1
+                self.coinInWorld.pop(i)
+                self.score_pub.publish(Int32(self.score))
+
+    def checkMud(self, x,y):
+        padding = 0.3
+        for i, mud in enumerate(self.mudInWorld):
+            if abs(x-coin[0]) < padding and abs(y-coin[1]) < padding:
+                velocity_msg = Twist(linear=Vector3(x-=.1))
+                self.vel_pub.publish(velocity_msg)
+
+    def checkStatus(self,x,y):
+        self.checkScore(x,y)
+        self.checkMud(x,y)
+        
+
     def processLocation(self,msg):
         #from the STAR_pose_continuous, get the location of robot in world
         self.cx = msg.pose.position.x
@@ -91,17 +109,24 @@ class Neatobot:
                 self.coinsInWorld.pop(i)
                 self.score_pub.publish(Int32(self.score))
 
-    # def checkMud(self, x,y):
-    #     padding = 0.3
-    #     for i, mud in enumerate(self.mudInWorld):
-    #         if abs(x-coin[0]) < padding and abs(y-coin[1]) < padding:
-    #             velocity_msg = Twist(linear=Vector3(x-=.1))
-    #             self.vel_pub.publish(velocity_msg)
+    def checkMud(self, x,y):
+        padding = 0.3
+        for i, mud in enumerate(self.mudInWorld):
+            if abs(x-coin[0]) < padding and abs(y-coin[1]) < padding:
+                velocity_msg = Twist(linear=Vector3(x-=.1))
+                self.vel_pub.publish(velocity_msg)
 
     def checkStatus(self,x,y):
         self.checkScore(x,y)
-        #self.checkMud(x,y)
+        self.checkMud(x,y)
 
+
+        """
+        def transformWorldToCamera(self, aCoin):
+        A function that transforms the coordinate systems, from world coordinate system to 
+        a camera coordinate system.
+        """
+  
     def get_camerainfo(self,msg):
         self.D = msg.D
         self.K = np.resize(msg.K, (3,3))
@@ -111,7 +136,6 @@ class Neatobot:
         """
     def process_image(self,msg):
         self.cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-
 
     def centerToCorners(self,center):
         width = 0.2 
@@ -146,7 +170,6 @@ class Neatobot:
 
         while not rospy.is_shutdown():
             if self.cv_image != None and self.K != None:
-
                 newImage = self.cv_image
                 # construct list of tuples: (distanceToRobot, spriteObject)
                 distanceArray = []

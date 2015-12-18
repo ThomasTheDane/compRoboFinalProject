@@ -59,6 +59,7 @@
 //    name: '/camera/image_raw',
 //    messageType : 'sensor_msgs/Image'
   })
+
  var eulerAngle = new ROSLIB.Topic({
     ros: ros,
     name: '/cam_up/STAR_pose_euler_angle',
@@ -66,27 +67,30 @@
 //    name: '/camera/image_raw',
 //    messageType : 'sensor_msgs/Image'
   })
+
   var score = new ROSLIB.Topic({
    ros: ros,
    name: '/cam_up/score',
    messageType : 'std_msgs/Int32'
-//    name: '/camera/image_raw',
-//    messageType : 'sensor_msgs/Image'
  })
+
   starPose.subscribe(function(message){
     console.log('starpose ' + starPose.name + ': ' + message.pose);
     console.log("data is " + message.data)
   })
+
   score.subscribe(function(message){
     console.log("score is " + message.data )
     updateScore(message.data)
   })
+
   eulerAngle.subscribe(function(message){
     console.log("eulerAngle is " + message.data)
     GLOBAL.z = message.z
     drawVector(GLOBAL.x,GLOBAL.y, GLOBAL.z)
     // console.log('Received message on' + eulerAngle.name + ': ' + message);
   })
+
   $(document).ready(function(){
     var up = false;
     var down = false;
@@ -184,6 +188,7 @@
       cmdVel.publish(twist);
     }, 50)
 });
+
 </script>
 
 <script>
@@ -191,11 +196,13 @@
     
     //drawVector(100, 100,0, gameContext);
   }, false);
+
   function updateScore(newscore){
     document.getElementById("score").innerHTML= newscore.toString();
     var audio = new Audio('Mario-coin-sound.mp3');
   audio.play();
   }
+
   function drawVector(x, y, angle){
     var gameCanvas = document.getElementById("gameCanvas");
     var gameContext = gameCanvas.getContext("2d");
