@@ -1,246 +1,65 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
+<!--
+  Helios by HTML5 UP
+  html5up.net | @n33co
+  Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
 <html>
-<head>
-<meta charset="utf-8" />
+  <head>
+    <title>Renegades</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script type="text/javascript" src="./index.js"></script>
+    <!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+    <link rel="stylesheet" href="main.css" />
+    <!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+  </head>
+  <body class="homepage">
+  <body onload="onload()">
+    <div id="page-wrapper">
+        <div id="header"></div>
 
-<script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
-<script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+      <!-- Banner -->
+      <div class="wrapper">
+        <div class="container">
+          <article id="main" class="special">
+            <header>
+              <h2>Augmented Reality Robotics  </h2><br>
+            </header>
 
-<style> 
-  .button{
-    width: 100px;
-    height: 100px;
-    border: none;
-  }
-  #forward{
-    margin-left: 106px;
-  }
-  #back{
-    margin-left: 106px;
-  }
-</style>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
-<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
-<script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
-<script type="text/javascript" type="text/javascript">
-  // Connecting to ROS
-  // -----------------
-  const GLOBAL = {
-    x : 0,
-    y : 0, 
-    z : 0
-  }; 
-  var ros = new ROSLIB.Ros({
-    url : 'ws://localhost:9090'
-  });
-  ros.on('connection', function() {
-    console.log('Connected to websocket server.');
-  });
-  ros.on('error', function(error) {
-    console.log('Error connecting to websocket server: ', error);
-  });
-  ros.on('close', function() {
-    console.log('Connection to websocket server closed.');
-  });
-  // Publishing a Topic
-  // ------------------
-  var cmdVel = new ROSLIB.Topic({
-    ros : ros,
-    name : '/cmd_vel',
-    messageType : 'geometry_msgs/Twist'
-  });
-  // Subscribing to a Topic
-  // ----------------------
-  var starPose = new ROSLIB.Topic({
-    ros: ros,
-    name: '/cam_up/STAR_pose',
-    messageType : 'geometry_msgs/PoseStamped'
-//    name: '/camera/image_raw',
-//    messageType : 'sensor_msgs/Image'
-  })
- var eulerAngle = new ROSLIB.Topic({
-    ros: ros,
-    name: '/cam_up/STAR_pose_euler_angle',
-    messageType : 'geometry_msgs/Vector3'
-//    name: '/camera/image_raw',
-//    messageType : 'sensor_msgs/Image'
-  })
-  var score = new ROSLIB.Topic({
-   ros: ros,
-   name: '/cam_up/score',
-   messageType : 'std_msgs/Int32'
-//    name: '/camera/image_raw',
-//    messageType : 'sensor_msgs/Image'
- })
-  starPose.subscribe(function(message){
-    console.log('starpose ' + starPose.name + ': ' + message.pose);
-    console.log("data is " + message.data)
-  })
-  score.subscribe(function(message){
-    console.log("score is " + message.data )
-    updateScore(message.data)
-  })
-  eulerAngle.subscribe(function(message){
-    console.log("eulerAngle is " + message.data)
-    GLOBAL.z = message.z
-    drawVector(GLOBAL.x,GLOBAL.y, GLOBAL.z)
-    // console.log('Received message on' + eulerAngle.name + ': ' + message);
-  })
-  $(document).ready(function(){
-    var up = false;
-    var down = false;
-    var right = false;
-    var left = false;
-    var speed = 0.0;
-    var twist = new ROSLIB.Message({
-      linear : {
-        x : 0.0,
-        y : 0.0,
-        z : 0.0
-      },
-      angular : {
-        x : 0.0,
-        y : 0.0,
-        z : 0.0
-      }
-    });
-    cmdVel.publish(twist);
-    $("#forward").mouseenter(function(){
-      console.log('forward');
-      up = true;
-    });
-    $("#back").hover(function(){
-      console.log('back');
-      down = true;
-    });
-    $("#right").hover(function(){
-      console.log('right');
-      right = true;
-    });
-    $("#left").hover(function(){
-      console.log('left');
-      left = true;
-    });
-    $(".button").mouseleave(function(){
-      console.log('stop');
-      up = false;
-      down = false;
-      right = false;
-      left = false;
-    });
-    $("#slider").slider();
-    var startPos = '$("#slider").slider("value");', 
-        endPos = '';
-    $("#slider").on("slidestop", function(event, ui) {
-        endPos = ui.value;
-        console.log(ui.value);
-        if (startPos != endPos) {
-            console.log(endPos/100.0);
-            speed = endPos/100.0;
-        }
-        startPos = endPos;
-    });
-    setInterval(function(){
-      var linearX = 0.0;
-      var angularZ = 0.0;
-      if(up){
-        linearX = speed;
-        $('#forward').attr("src", "img/topH.png")
-      }else{
-        $('#forward').attr("src", "img/top.png")
-      }
-      if(down){
-        linearX = -speed;
-        linearX = -0.5;
-        $('#back').attr("src", "img/downH.png")
-      }else{
-        $('#back').attr("src", "img/down.png")
-      }
-      if(right){
-        angularZ = -speed;
-        $('#right').attr("src", "img/rightH.png")
-      }else{
-        $('#right').attr("src", "img/right.png")
-      }
-      if(left){
-        angularZ = speed;
-        $('#left').attr("src", "img/leftH.png")
-      }else{
-        $('#left').attr("src", "img/left.png")
-      }
-      twist = new ROSLIB.Message({
-        linear : {
-          x : linearX,
-          y : 0.0,
-          z : 0.0
-        },
-        angular : {
-          x : 0.0,
-          y : 0.0,
-          z : angularZ
-        }
-      });
-      cmdVel.publish(twist);
-    }, 50)
-});
-</script>
+          <div class="row">
+            <article class="12u 12u(mobile) special">
+              <header>
+                <p class=title>Subcribe to the topic you are interested  
+                </p>
+                <form id="custom_topic_form">
+                  <center>
+                    <input name="subscribe_video_topic" type="text" style="width: 200px;"><br>
+                  </center>
+                  <input type="submit" value="Go">
+                </form>
+              </header>
+            </article>
+          </div>
+        </article>
+        </div>
+      </div>
 
-<script>
-  window.addEventListener("load", function(){
-    
-    //drawVector(100, 100,0, gameContext);
-  }, false);
-  function updateScore(newscore){
-    document.getElementById("score").innerHTML= newscore.toString();
-    var audio = new Audio('Mario-coin-sound.mp3');
-  audio.play();
-  }
-  function drawVector(x, y, angle){
-    var gameCanvas = document.getElementById("gameCanvas");
-    var gameContext = gameCanvas.getContext("2d");
-    var x = x*100;
-    var y = y*100;
-    // gameContext.clearRect(0,0,gameContext.canvas.width, gameContext.canvas.height)
-    var dist = 20;
-    // var bottomLeftY = -gameContext.canvas.height/2;
-    // var bottomLeftX = -gameContext.canvas.width/2;
-    var startX = x+(gameContext.canvas.width/2);
-    var startY = y+(gameContext.canvas.height/2);
-    console.log(startX, startY);
-    gameContext.beginPath();
-    gameContext.moveTo(startX,startY);
-    gameContext.lineTo(startX+dist*Math.cos(angle), startY+dist*(Math.sin(angle)));
-    gameContext.stroke();
-    gameContext.fill();
-    //gameContext.lineTo(x + Math.cos(angle)*10, y + Math.sin(angle)*10)
-  }
-</script>
-</head>
+      <div class="row">
+        <div class="12u">
+          <div class="copyright">
+            <ul class="menu">
+              <li><a href="https://medium.com/renegade-stories" target="_blank">Blog</a></li>
+              <li>Olin College</li>
+              <li>Fall 2015</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<body>
-
-  <img src="./scripts/logo.png" width="300">
-  <h1>Game of Renegades</h1>
-  <p>Play with our robots to collect coins as fast as you can</p>
-  <div id="score">0</div>
-
-  <img src="img/top.png" id="forward" class="button"></img>
-  <br>
-  <img src="img/left.png" id="left" class="button"></img>
-
-  <img class="button"></img>
-
-  <img src="img/right.png" id="right" class="button"></img>
-
-  <br>
-
-  <img src="img/down.png" id="back" class="button"></img>
-
-  <div id="slider"></div>
-
-  <canvas id="gameCanvas" height="500" width="500" style="border: 1px solid grey">
-  </canvas>
-
-</body>
+    <!-- Scripts -->
+      <script type="text/javascript" src="timer.js"></script>
+  </body>
 </html>
