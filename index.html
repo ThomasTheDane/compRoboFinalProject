@@ -52,21 +52,6 @@
   });
   // Subscribing to a Topic
   // ----------------------
-  var starPose = new ROSLIB.Topic({
-    ros: ros,
-    name: '/cam_up/STAR_pose',
-    messageType : 'geometry_msgs/PoseStamped'
-//    name: '/camera/image_raw',
-//    messageType : 'sensor_msgs/Image'
-  })
-
- var eulerAngle = new ROSLIB.Topic({
-    ros: ros,
-    name: '/cam_up/STAR_pose_euler_angle',
-    messageType : 'geometry_msgs/Vector3'
-//    name: '/camera/image_raw',
-//    messageType : 'sensor_msgs/Image'
-  })
 
   var score = new ROSLIB.Topic({
    ros: ros,
@@ -74,21 +59,15 @@
    messageType : 'std_msgs/Int32'
  })
 
-  starPose.subscribe(function(message){
-    console.log('starpose ' + starPose.name + ': ' + message.pose);
-    console.log("data is " + message.data)
-  })
+ var image = new ROSLIB.Topic({
+   ros: ros,
+   name: '/cam_up/finalImage',
+   messageType : 'Image'
+ })
 
   score.subscribe(function(message){
     console.log("score is " + message.data )
     updateScore(message.data)
-  })
-
-  eulerAngle.subscribe(function(message){
-    console.log("eulerAngle is " + message.data)
-    GLOBAL.z = message.z
-    drawVector(GLOBAL.x,GLOBAL.y, GLOBAL.z)
-    // console.log('Received message on' + eulerAngle.name + ': ' + message);
   })
 
   $(document).ready(function(){
@@ -97,6 +76,7 @@
     var right = false;
     var left = false;
     var speed = 0.0;
+
     var twist = new ROSLIB.Message({
       linear : {
         x : 0.0,
@@ -109,30 +89,9 @@
         z : 0.0
       }
     });
+
     cmdVel.publish(twist);
-    $("#forward").mouseenter(function(){
-      console.log('forward');
-      up = true;
-    });
-    $("#back").hover(function(){
-      console.log('back');
-      down = true;
-    });
-    $("#right").hover(function(){
-      console.log('right');
-      right = true;
-    });
-    $("#left").hover(function(){
-      console.log('left');
-      left = true;
-    });
-    $(".button").mouseleave(function(){
-      console.log('stop');
-      up = false;
-      down = false;
-      right = false;
-      left = false;
-    });
+
     $("#slider").slider();
     var startPos = '$("#slider").slider("value");', 
         endPos = '';
@@ -145,34 +104,62 @@
         }
         startPos = endPos;
     });
+
+    document.onkeypress = function(e){
+
+      if(e.keyCode == 81){//Q: faster
+        speed +=0.01
+      }
+      if(e.keyCode == 90){ //Z: slow down
+        speed -=0.01
+      }
+      if(e.keyCode == 119){
+        up = true
+      }
+      if(e.keyCode == 97){
+        left = true
+      }
+      if(e.keyCode == 115){
+        down = true
+      }
+      if(e.keyCode == 100){
+        right = true
+      }
+    }
+
+    document.onkeyup = function(e){
+      console.log(e)
+
+      if(e.keyCode == 87){
+        up = false
+      }
+      if(e.keyCode == 65){
+        left = false
+      }
+      if(e.keyCode == 83){
+        down = false
+      }
+      if(e.keyCode == 68){
+        right = false
+      }
+    }
+
     setInterval(function(){
       var linearX = 0.0;
       var angularZ = 0.0;
       if(up){
         linearX = speed;
-        $('#forward').attr("src", "img/topH.png")
-      }else{
-        $('#forward').attr("src", "img/top.png")
       }
       if(down){
         linearX = -speed;
-        linearX = -0.5;
-        $('#back').attr("src", "img/downH.png")
-      }else{
-        $('#back').attr("src", "img/down.png")
       }
       if(right){
         angularZ = -speed;
-        $('#right').attr("src", "img/rightH.png")
-      }else{
-        $('#right').attr("src", "img/right.png")
       }
       if(left){
         angularZ = speed;
-        $('#left').attr("src", "img/leftH.png")
-      }else{
-        $('#left').attr("src", "img/left.png")
       }
+
       twist = new ROSLIB.Message({
         linear : {
           x : linearX,
@@ -193,96 +180,27 @@
 
 <script>
   window.addEventListener("load", function(){
-    
-    //drawVector(100, 100,0, gameContext);
   }, false);
 
   function updateScore(newscore){
     document.getElementById("score").innerHTML= newscore.toString();
     var audio = new Audio('Mario-coin-sound.mp3');
-  audio.play();
+    audio.play();
   }
 
-  function drawVector(x, y, angle){
-    var gameCanvas = document.getElementById("gameCanvas");
-    var gameContext = gameCanvas.getContext("2d");
-    var x = x*100;
-    var y = y*100;
-    // gameContext.clearRect(0,0,gameContext.canvas.width, gameContext.canvas.height)
-    var dist = 20;
-    // var bottomLeftY = -gameContext.canvas.height/2;
-    // var bottomLeftX = -gameContext.canvas.width/2;
-    var startX = x+(gameContext.canvas.width/2);
-    var startY = y+(gameContext.canvas.height/2);
-    console.log(startX, startY);
-    gameContext.beginPath();
-    gameContext.moveTo(startX,startY);
-    gameContext.lineTo(startX+dist*Math.cos(angle), startY+dist*(Math.sin(angle)));
-    gameContext.stroke();
-    gameContext.fill();
-    //gameContext.lineTo(x + Math.cos(angle)*10, y + Math.sin(angle)*10)
-  }
 </script>
 </head>
 
 <body>
 
-  <h1>Simple roslib Example</h1>
-  <p>Check your Web Console for output.</p>
+  <h1>Play Neato-Kart </h1>
 
   <div id="score">0</div>
-
-  <img src="img/top.png" id="forward" class="button"></img>
-  <br>
-  <img src="img/left.png" id="left" class="button"></img>
-
-  <img class="button"></img>
-
-  <img src="img/right.png" id="right" class="button"></img>
-
-  <br>
-
-  <img src="img/down.png" id="back" class="button"></img>
-
   <div id="slider"></div>
-
+  <video id="remote-video" autoplay="true"></video>
+  <!-- 
   <canvas id="gameCanvas" height="500" width="500" style="border: 1px solid grey">
-  </canvas>
+  </canvas> -->
 
 </body>
 </html>
-
-
-<!-- 
-
-
-    document.onkeypress = function(e){
-      if(e.keyCode == 119){
-        up = true
-      }
-      if(e.keyCode == 97){
-        left = true
-      }
-      if(e.keyCode == 115){
-        down = true
-      }
-      if(e.keyCode == 100){
-        right = true
-      }
-    }
-
-    document.onkeyup = function(e){
-      console.log(e)
-      if(e.keyCode == 87){
-        up = false
-      }
-      if(e.keyCode == 65){
-        left = false
-      }
-      if(e.keyCode == 83){
-        down = false
-      }
-      if(e.keyCode == 68){
-        right = false
-      }
-    } -->

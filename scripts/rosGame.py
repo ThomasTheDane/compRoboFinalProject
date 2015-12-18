@@ -18,6 +18,7 @@ from copy import deepcopy
 from math import sin, cos, pi, atan2, fabs
 import rospkg
 import math
+import random
 
 from ARSprite import ARSprite
 
@@ -86,7 +87,7 @@ class Neatobot:
     def checkScore(self, x,y):
         padding = 0.2
         for i, coin in enumerate(self.coinsInWorld):
-            if abs(x-coin[0]) < padding and abs(y-coin[1]) < padding:
+            if abs(x-coin.midline[0]) < padding and abs(y-coin.midline[1]) < padding:
                 self.score+=1
                 self.coinsInWorld.pop(i)
                 self.score_pub.publish(Int32(self.score))
@@ -94,14 +95,13 @@ class Neatobot:
     def checkSpike(self, x,y):
         padding = 0.3
         for i, spike in enumerate(self.spikesInWorld):
-            if abs(x-coin[0]) < padding and abs(y-coin[1]) < padding:
-                velocity_msg = Twist(linear=Vector3(x=.1))
-                self.vel_pub.publish(velocity_msg)
+            if abs(x-spike.midline[0]) < padding and abs(y-spike.midline[1]) < padding:
+                #TODO Send word to web that you've died 
+                self.startGame()
 
     def checkStatus(self,x,y):
         self.checkScore(x,y)
         self.checkSpike(x,y)
-
 
         """
         def transformWorldToCamera(self, aCoin):
@@ -125,11 +125,33 @@ class Neatobot:
 
     def distanceBetween(self, pointA, pointB):
         return abs(math.sqrt(((pointB[0] - pointA[0])**2) + ((pointB[1] - pointA[1])**2)))
-
-
+    
     def startGame(self):
         self.score = 0
 
+        # place 5 random coins in 3x3 space 
+        for i in range(0, 5):
+            print "making coin"
+            coin_image_path = "/scripts/coin.png"
+            coin_speed = pi/60
+            coin_coordinate = [random.uniform(0,3), random.uniform(-3,0)]
+            arCoinSprite = ARSprite(self.centerToCorners(coin_coordinate), coin_image_path, coin_speed)
+            self.coinsInWorld.append(arCoinSprite)
+
+        # place 3 randomly placed spikes 
+        for i in range(0,3):
+            spike_image_path = "/scripts/spike.jpg"
+            spike_coordinate = [random.uniform(0,3), random.uniform(-3,0)]
+            valid_coordinate = False
+            while not valid_coordinate:
+                for aCoin in self.coinsInWorld:
+                    if self.distanceBetween(aCoin.midline, spike_coordinate) < .2:
+                        valid_coordinate = False
+                        spike_coordinate = [random.uniform(0,3), random.uniform(0,3)]
+                        break
+                valid_coordinate = True
+            arSpikeSprite = ARSprite(self.centerToCorners(spike_coordinate), spike_image_path)
+            self.spikesInWorld.append(arSpikeSprite)
 
         """
         def run(self):
@@ -138,40 +160,28 @@ class Neatobot:
     def run(self):
         """ The main run loop, in this node it doesn't do anything """
         r = rospy.Rate(10)
-        coinsOnCoinsOnCoins = []
-        coin_coords = []
-
-        coin_coords.append(self.centerToCorners([0,0]))
-        coin_coords.append(self.centerToCorners([1,0]))
-        coin_coords.append(self.centerToCorners([0,1]))
-        coin_coords.append(self.centerToCorners([1,1]))
-
-        for aCoord in coin_coords:
-            coin_image_path = "/scripts/coin.png"
-            coin_speed = pi/60
-            arSprite = ARSprite(aCoord, coin_image_path, coin_speed)
-            coinsOnCoinsOnCoins.append(arSprite)
-            self.coinsInWorld.append(arSprite.midline)
-
-        #mud = ARSprite(np.array([[[0], [0], [-0.2], [1]],[[10], [0], [-0.2], [1]],[[0], [-10], [-0.2], [1]],[[10], [-10], [-0.2], [1]]],dtype='float32'), "/scripts/mud.jpg")
+        self.startGame()
 
         while not rospy.is_shutdown():
             if self.cv_image != None and self.K != None:
                 newImage = self.cv_image
-                # construct list of tuples: (distanceToRobot, spriteObject)
-                distanceArray = []
-                for aCoin in coinsOnCoinsOnCoins:
-                    distanceArray.append((self.distanceBetween([self.cx, self.cy], aCoin.midline), aCoin))
                 
-                distanceArray.sort(key=lambda tup: tup[0], reverse=True)
+                # construct list of tuples: (distanceToRobot, spriteObject)
+                distanceRenderArray = []
+                for aCoin in self.coinsInWorld:
+                    distanceRenderArray.append((self.distanceBetween([self.cx, self.cy], aCoin.midline), aCoin))
 
-                print distanceArray
+                for aSpike in self.spikesInWorld:
+                    distanceRenderArray.append((self.distanceBetween([self.cx, self.cy], aSpike.midline), aSpike))
+                
+                distanceRenderArray.sort(key=lambda tup: tup[0], reverse=True)
 
-                for _, aCoin in distanceArray:
-                    aCoin.setK(self.K)
-                    newImage = aCoin.addSpriteToView(newImage, [self.cx, self.cy, self.cz], self.theta)
+                for _, aSprite in distanceRenderArray:
+                    aSprite.setK(self.K)
+                    newImage = aSprite.addSpriteToView(newImage, [self.cx, self.cy, self.cz], self.theta)
 
                 cv2.imshow('video_window', newImage)
+                self.img_pub.publish(self.bridge.cv2_to_imgmsg(newImage, "bgr8"))    
                 cv2.waitKey(10)
 
                 
