@@ -70,6 +70,10 @@
     updateScore(message.data)
   })
 
+  image.subscribe(function(messge){
+    console.log("got the image" )
+  })
+
   $(document).ready(function(){
     var up = false;
     var down = false;
