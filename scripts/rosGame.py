@@ -118,7 +118,7 @@ class Neatobot:
         return np.array([[[center[0]],[center[1]],[0],[1]],[[center[0]],[center[1]],[width],[1]],[[center[0]],[center[1]+width],[0],[1]],[[center[0]],[center[1]+width],[width],[1]]],dtype='float32')
 
     def distanceBetween(self, pointA, pointB):
-        return math.sqrt(((pointB[0] - pointA[0])**2) + ((pointB[1] - pointA[1])**2))
+        return abs(math.sqrt(((pointB[0] - pointA[0])**2) + ((pointB[1] - pointA[1])**2)))
 
         """
         def run(self):
@@ -149,11 +149,15 @@ class Neatobot:
 
                 newImage = self.cv_image
                 # construct list of tuples: (distanceToRobot, spriteObject)
-#                distanceArray = []
-#                for aCoin in coinsOnCoinsOnCoins:
-#                    distanceArray.append((self.distanceBetween([self.cx, self.cy], )))
-
+                distanceArray = []
                 for aCoin in coinsOnCoinsOnCoins:
+                    distanceArray.append((self.distanceBetween([self.cx, self.cy], aCoin.midline), aCoin))
+                
+                distanceArray.sort(key=lambda tup: tup[0], reverse=True)
+
+                print distanceArray
+
+                for _, aCoin in distanceArray:
                     aCoin.setK(self.K)
                     newImage = aCoin.addSpriteToView(newImage, [self.cx, self.cy, self.cz], self.theta)
 
