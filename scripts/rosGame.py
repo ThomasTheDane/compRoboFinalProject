@@ -61,7 +61,6 @@ class Neatobot:
         rospy.Subscriber("STAR_pose_continuous",PoseStamped, self.processLocation)
         rospy.Subscriber("camera/camera_info", CameraInfo, self.get_camerainfo)
         self.score_pub = rospy.Publisher("score", Int32, queue_size=1)
-        #self.vel_pub = rospy.Publisher("mud", Twist, queue_size=1)
         """
         def processLocation(self,msg):
         A callBack function for STAR_pose_continuous which saves the location of the robot
@@ -92,14 +91,14 @@ class Neatobot:
 
     def checkSpike(self, x,y):
         padding = 0.3
-        for i, spike in enumerate(self.mudInWorld):
+        for i, spike in enumerate(self.spikeInWorld):
             if abs(x-coin[0]) < padding and abs(y-coin[1]) < padding:
                 velocity_msg = Twist(linear=Vector3(x-=.1))
                 self.vel_pub.publish(velocity_msg)
 
     def checkStatus(self,x,y):
         self.checkScore(x,y)
-        self.checkMud(x,y)
+        self.checkSpike(x,y)
 
 
         """
