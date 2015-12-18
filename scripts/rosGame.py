@@ -58,13 +58,10 @@ class Neatobot:
         self.mudInWorld = []
         self.score=0
 
-        rospy.Subscriber("/camera/image_raw", Image, self.process_image)
         rospy.Subscriber("STAR_pose_continuous",PoseStamped, self.processLocation)
         rospy.Subscriber("camera/camera_info", CameraInfo, self.get_camerainfo)
         self.score_pub = rospy.Publisher("score", Int32, queue_size=1)
         self.vel_pub = rospy.Publisher("mud", Twist, queue_size=1)
-        self.score_pub = rospy.Publisher("score", Int32, queue_size=1)
-
         """
         def processLocation(self,msg):
         A callBack function for STAR_pose_continuous which saves the location of the robot
