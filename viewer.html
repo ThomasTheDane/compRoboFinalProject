@@ -8,6 +8,7 @@
     <script type="text/javascript" src="/adapter.js"></script>
     <script type="text/javascript" src="/webrtc_ros.js"></script>
     <script type="text/javascript" src="/viewer.js"></script>
+    <link rel="stylesheet" href="main.css" />
 
     <script type="text/javascript">
       // Connecting to ROS
@@ -41,23 +42,25 @@
     //   // Subscribing to a Topic
     //   // ----------------------
 
-    //   var score = new ROSLIB.Topic({
-    //    ros: ros,
-    //    name: '/cam_up/score',
-    //    messageType : 'std_msgs/Int32'
-    //  })
+      var score = new ROSLIB.Topic({
+       ros: ros,
+       name: '/cam_up/score',
+       messageType : 'std_msgs/Int32'
+     })
 
+    // NOT NEEDED
     //  var image = new ROSLIB.Topic({
     //    ros: ros,
     //    name: '/cam_up/finalImage',
     //    messageType : 'sensor_msgs/Image'
     //  })
 
-    //   score.subscribe(function(message){
-    //     console.log("score is " + message.data )
-    //     updateScore(message.data)
-    //   })
+      score.subscribe(function(message){
+        console.log("score is " + message.data )
+        updateScore(message.data)
+      })
 
+    // NOT NEEDED
     //   image.subscribe(function(messge){
     //     console.log("got the image" )
         
@@ -174,22 +177,34 @@
     </script>
   </head>
   <body>
-    <h1>Subscribed</h1>
-    <video id="remote-video" autoplay="true"></video>
-    <ul>
-      <li>Move around with the robot using <b>WASD</b> commands.</li>
-      <li>Collect as many coins as you can before the time ends.</li>
-      <li>Mind the spikes!!</li>
-    </ul>
-    <p class=title>
-      Score  
-    </p>
-    <div id="score">0</div>
-    <p class=title>
-      Timer  
-    </p>
-    <div id="time">01:00</div><br>
-    <button id="buttonStart">Start</button>
+
+    <div class="row">
+      <article class="6u 12u(mobile) special">
+        <video id="remote-video" autoplay="true"></video>         
+      </article>
+
+      <article class="6u 12u(mobile) special">
+        <header>
+          <p class=title>
+            Coin Collector  
+          </p>
+          <ul>
+            <li>Move around with the robot using <b>WASD</b> commands.</li>
+            <li>Collect as many coins as you can before the time ends.</li>
+            <li>Mind the spikes!!</li>
+          </ul>
+          <p class=title>
+            Score  
+          </p>
+          <div id="score">0</div>
+          <p class=title>
+            Timer  
+          </p>
+          <div id="time">01:00</div><br>
+          <button id="buttonStart">Start</button>
+        </header>
+      </article>
+    </div>
     <div id="config-box"></div>
   </body>
 </html>
