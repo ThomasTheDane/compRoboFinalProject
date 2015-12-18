@@ -1,0 +1,195 @@
+<html>
+  <head>
+    <title>WebRTC ROS</title>
+    <script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+    <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+    <script type="text/javascript" src="/adapter.js"></script>
+    <script type="text/javascript" src="/webrtc_ros.js"></script>
+    <script type="text/javascript" src="/viewer.js"></script>
+
+    <script type="text/javascript">
+      // Connecting to ROS
+      // -----------------
+      const GLOBAL = {
+        x : 0,
+        y : 0, 
+        z : 0
+      }; 
+      var ros = new ROSLIB.Ros({
+        url : 'ws://localhost:9090'
+      });
+      ros.on('connection', function() {
+        console.log('Connected to websocket server.');
+      });
+      ros.on('error', function(error) {
+        console.log('Error connecting to websocket server: ', error);
+      });
+      ros.on('close', function() {
+        console.log('Connection to websocket server closed.');
+      });
+    //   // Publishing a Topic
+    //   // ------------------
+      var cmdVel = new ROSLIB.Topic({
+        ros : ros,
+        name : '/cmd_vel',
+        messageType : 'geometry_msgs/Twist'
+      });
+
+
+    //   // Subscribing to a Topic
+    //   // ----------------------
+
+    //   var score = new ROSLIB.Topic({
+    //    ros: ros,
+    //    name: '/cam_up/score',
+    //    messageType : 'std_msgs/Int32'
+    //  })
+
+    //  var image = new ROSLIB.Topic({
+    //    ros: ros,
+    //    name: '/cam_up/finalImage',
+    //    messageType : 'sensor_msgs/Image'
+    //  })
+
+    //   score.subscribe(function(message){
+    //     console.log("score is " + message.data )
+    //     updateScore(message.data)
+    //   })
+
+    //   image.subscribe(function(messge){
+    //     console.log("got the image" )
+        
+    //   })
+
+      $(document).ready(function(){
+        console.log("YOOOOOO")
+        var up = false;
+        var down = false;
+        var right = false;
+        var left = false;
+        var speed = 1.0;
+
+        var twist = new ROSLIB.Message({
+          linear : {
+            x : 0.0,
+            y : 0.0,
+            z : 0.0
+          },
+          angular : {
+            x : 0.0,
+            y : 0.0,
+            z : 0.0
+          }
+        });
+
+        cmdVel.publish(twist);
+
+        document.onkeypress = function(e){
+          if(e.keyCode === 81){//Q: faster
+            speed +=0.01
+            console.log("SPEED", speed)
+          }
+          if(e.keyCode === 90){ //Z: slow down
+            speed -=0.01
+          }
+          if(e.keyCode === 119){
+            up = true
+          }
+          if(e.keyCode === 97){
+            left = true
+          }
+          if(e.keyCode == 115){
+            down = true
+          }
+          if(e.keyCode == 100){
+            right = true
+          }
+        }
+
+        document.onkeyup = function(e){
+          console.log(e)
+
+          if(e.keyCode == 87){
+            up = false
+          }
+          if(e.keyCode == 65){
+            left = false
+          }
+          if(e.keyCode == 83){
+            down = false
+          }
+          if(e.keyCode == 68){
+            right = false
+          }
+        }
+
+        setInterval(function(){
+          var linearX = 0.0;
+          var angularZ = 0.0;
+          if(up){
+            linearX = speed;
+          }
+          if(down){
+            linearX = -speed;
+          }
+          if(right){
+            angularZ = -speed;
+          }
+          if(left){
+            angularZ = speed;
+          }
+
+          twist = new ROSLIB.Message({
+            linear : {
+              x : linearX,
+              y : 0.0,
+              z : 0.0
+            },
+            angular : {
+              x : 0.0,
+              y : 0.0,
+              z : angularZ
+            }
+          });
+          cmdVel.publish(twist);
+        }, 50)
+    });
+
+    </script>
+
+    <script>
+      window.addEventListener("load", function(){
+      }, false);
+
+      function updateScore(newscore){
+        document.getElementById("score").innerHTML= newscore.toString();
+        var audio = new Audio('Mario-coin-sound.mp3');
+        audio.play();
+      }
+
+    </script>
+
+    </script>
+  </head>
+  <body>
+    <h1>Subscribed</h1>
+    <video id="remote-video" autoplay="true"></video>
+    <ul>
+      <li>Move around with the robot using <b>WASD</b> commands.</li>
+      <li>Collect as many coins as you can before the time ends.</li>
+      <li>Mind the spikes!!</li>
+    </ul>
+    <p class=title>
+      Score  
+    </p>
+    <div id="score">0</div>
+    <p class=title>
+      Timer  
+    </p>
+    <div id="time">01:00</div><br>
+    <button id="buttonStart">Start</button>
+    <div id="config-box"></div>
+  </body>
+</html>

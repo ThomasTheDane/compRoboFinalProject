@@ -1,210 +1,64 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
+<!--
+  Helios by HTML5 UP
+  html5up.net | @n33co
+  Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
 <html>
-<head>
-<meta charset="utf-8" />
+  <head>
+    <title>Renegades</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script type="text/javascript" src="./index.js"></script>
+    <!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+    <link rel="stylesheet" href="main.css" />
+    <!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+  </head>
+  <body class="homepage">
+  <body onload="onload()">
+    <div id="page-wrapper">
+        <div id="header"></div>
 
-<script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
-<script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+      <!-- Banner -->
+      <div class="wrapper">
+        <div class="container">
+          <article id="main" class="special">
+            <header>
+              <h2>Renegades</h2><br>
+            </header>
 
-<style> 
-  .button{
-    width: 100px;
-    height: 100px;
-    border: none;
-  }
-  #forward{
-    margin-left: 106px;
-  }
-  #back{
-    margin-left: 106px;
-  }
-</style>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
-<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
-<script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
-<script type="text/javascript" type="text/javascript">
-  // Connecting to ROS
-  // -----------------
-  const GLOBAL = {
-    x : 0,
-    y : 0, 
-    z : 0
-  }; 
-  var ros = new ROSLIB.Ros({
-    url : 'ws://localhost:9090'
-  });
-  ros.on('connection', function() {
-    console.log('Connected to websocket server.');
-  });
-  ros.on('error', function(error) {
-    console.log('Error connecting to websocket server: ', error);
-  });
-  ros.on('close', function() {
-    console.log('Connection to websocket server closed.');
-  });
-  // Publishing a Topic
-  // ------------------
-  var cmdVel = new ROSLIB.Topic({
-    ros : ros,
-    name : '/cmd_vel',
-    messageType : 'geometry_msgs/Twist'
-  });
-  // Subscribing to a Topic
-  // ----------------------
+          <div class="row">
+            <article class="6u 12u(mobile) special">
+              <header>
+                <p class=title>
+                  Coin Collector  
+                </p>
+                <form id="custom_topic_form">
+                  Subscribe Image Topic: <input name="subscribe_video_topic" type="text"><br>
+                  <input type="submit" value="Go">
+                </form>
+              </header>
+            </article>
+          </div>
+        </article>
+        </div>
+      </div>
 
-  var score = new ROSLIB.Topic({
-   ros: ros,
-   name: '/cam_up/score',
-   messageType : 'std_msgs/Int32'
- })
+      <div class="row">
+        <div class="12u">
+          <div class="copyright">
+            <ul class="menu">
+              <li><a href="https://medium.com/renegade-stories" target="_blank">Blog</a></li>
+              <li>Olin College</li>
+              <li>Fall 2015</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
 
- var image = new ROSLIB.Topic({
-   ros: ros,
-   name: '/cam_up/finalImage',
-   messageType : 'Image'
- })
-
-  score.subscribe(function(message){
-    console.log("score is " + message.data )
-    updateScore(message.data)
-  })
-
-  image.subscribe(function(messge){
-    console.log("got the image" )
-  })
-
-  $(document).ready(function(){
-    var up = false;
-    var down = false;
-    var right = false;
-    var left = false;
-    var speed = 0.0;
-
-    var twist = new ROSLIB.Message({
-      linear : {
-        x : 0.0,
-        y : 0.0,
-        z : 0.0
-      },
-      angular : {
-        x : 0.0,
-        y : 0.0,
-        z : 0.0
-      }
-    });
-
-    cmdVel.publish(twist);
-
-    $("#slider").slider();
-    var startPos = '$("#slider").slider("value");', 
-        endPos = '';
-    $("#slider").on("slidestop", function(event, ui) {
-        endPos = ui.value;
-        console.log(ui.value);
-        if (startPos != endPos) {
-            console.log(endPos/100.0);
-            speed = endPos/100.0;
-        }
-        startPos = endPos;
-    });
-
-    document.onkeypress = function(e){
-
-      if(e.keyCode == 81){//Q: faster
-        speed +=0.01
-      }
-      if(e.keyCode == 90){ //Z: slow down
-        speed -=0.01
-      }
-      if(e.keyCode == 119){
-        up = true
-      }
-      if(e.keyCode == 97){
-        left = true
-      }
-      if(e.keyCode == 115){
-        down = true
-      }
-      if(e.keyCode == 100){
-        right = true
-      }
-    }
-
-    document.onkeyup = function(e){
-      console.log(e)
-
-      if(e.keyCode == 87){
-        up = false
-      }
-      if(e.keyCode == 65){
-        left = false
-      }
-      if(e.keyCode == 83){
-        down = false
-      }
-      if(e.keyCode == 68){
-        right = false
-      }
-    }
-
-    setInterval(function(){
-      var linearX = 0.0;
-      var angularZ = 0.0;
-      if(up){
-        linearX = speed;
-      }
-      if(down){
-        linearX = -speed;
-      }
-      if(right){
-        angularZ = -speed;
-      }
-      if(left){
-        angularZ = speed;
-      }
-
-      twist = new ROSLIB.Message({
-        linear : {
-          x : linearX,
-          y : 0.0,
-          z : 0.0
-        },
-        angular : {
-          x : 0.0,
-          y : 0.0,
-          z : angularZ
-        }
-      });
-      cmdVel.publish(twist);
-    }, 50)
-});
-
-</script>
-
-<script>
-  window.addEventListener("load", function(){
-  }, false);
-
-  function updateScore(newscore){
-    document.getElementById("score").innerHTML= newscore.toString();
-    var audio = new Audio('Mario-coin-sound.mp3');
-    audio.play();
-  }
-
-</script>
-</head>
-
-<body>
-
-  <h1>Play Neato-Kart </h1>
-
-  <div id="score">0</div>
-  <div id="slider"></div>
-  <video id="remote-video" autoplay="true"></video>
-  <!-- 
-  <canvas id="gameCanvas" height="500" width="500" style="border: 1px solid grey">
-  </canvas> -->
-
-</body>
+    <!-- Scripts -->
+      <script type="text/javascript" src="timer.js"></script>
+  </body>
 </html>
