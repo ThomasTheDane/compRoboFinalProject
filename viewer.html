@@ -5,9 +5,9 @@
     <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
-    <script type="text/javascript" src="/adapter.js"></script>
-    <script type="text/javascript" src="/webrtc_ros.js"></script>
-    <script type="text/javascript" src="/viewer.js"></script>
+    <script type="text/javascript" src="./adapter.js"></script>
+    <script type="text/javascript" src="./webrtc_ros.js"></script>
+    <script type="text/javascript" src="./viewer.js"></script>
     <link rel="stylesheet" href="main.css" />
 
     <script type="text/javascript">
@@ -38,7 +38,11 @@
         messageType : 'geometry_msgs/Twist'
       });
 
-
+      var gameStatus = new ROSLIB.Topic({
+        ros : ros,
+        name : '/game',
+        messageType : 'std_msgs/Bool'
+      });
     //   // Subscribing to a Topic
     //   // ----------------------
 
@@ -48,26 +52,49 @@
        messageType : 'std_msgs/Int32'
      })
 
-    // NOT NEEDED
-    //  var image = new ROSLIB.Topic({
-    //    ros: ros,
-    //    name: '/cam_up/finalImage',
-    //    messageType : 'sensor_msgs/Image'
-    //  })
-
       score.subscribe(function(message){
         console.log("score is " + message.data )
         updateScore(message.data)
+    if (message.data === -1){
+      $("#gameOver").show();
+    }
       })
 
-    // NOT NEEDED
-    //   image.subscribe(function(messge){
-    //     console.log("got the image" )
-        
-    //   })
-
       $(document).ready(function(){
-        console.log("YOOOOOO")
+
+      function startTimer(duration, display) {
+      var timer = duration, minutes, seconds;
+
+      var sessionInterval = setInterval(function () {
+          minutes = parseInt(timer / 60, 10)
+          seconds = parseInt(timer % 60, 10);
+
+          minutes = minutes < 10 ? "0" + minutes : minutes;
+          seconds = seconds < 10 ? "0" + seconds : seconds;
+
+          display.textContent = minutes + ":" + seconds;
+
+          if (--timer < 0) {
+              timer = duration;
+              $("#buttonStart").show();
+              var audio = new Audio('smb_mariodie.mp3');
+              audio.play();
+              $("#time").text("01:00")
+              clearInterval(sessionInterval);
+          }
+      }, 1000);
+  }
+
+  $("#buttonStart").click(function(){
+      var oneMinute = 60,
+      display = document.querySelector('#time');
+      startTimer(oneMinute, display);
+      gameStatus.publish(Boolean(true)); //Check datatype
+      $("#buttonStart").hide();
+  })
+
+        $("#gameOver").hide();
+        // console.log("YOOOOOO")
         var up = false;
         var down = false;
         var right = false;
@@ -88,7 +115,8 @@
         });
 
         cmdVel.publish(twist);
-
+        // TODO if time out or pressed start publish gamestatus
+        
         document.onkeypress = function(e){
           if(e.keyCode === 81){//Q: faster
             speed +=0.01
@@ -97,16 +125,16 @@
           if(e.keyCode === 90){ //Z: slow down
             speed -=0.01
           }
-          if(e.keyCode === 119){
+          if(e.keyCode === 119){ //38
             up = true
           }
-          if(e.keyCode === 97){
+          if(e.keyCode === 97){ //37
             left = true
           }
-          if(e.keyCode == 115){
+          if(e.keyCode == 115){ // 40
             down = true
           }
-          if(e.keyCode == 100){
+          if(e.keyCode == 100){ //39
             right = true
           }
         }
@@ -114,10 +142,10 @@
         document.onkeyup = function(e){
           console.log(e)
 
-          if(e.keyCode == 87){
+          if(e.keyCode == 87){ //38
             up = false
           }
-          if(e.keyCode == 65){
+          if(e.keyCode == 65){ //37
             left = false
           }
           if(e.keyCode == 83){
@@ -167,9 +195,14 @@
       }, false);
 
       function updateScore(newscore){
-        document.getElementById("score").innerHTML= newscore.toString();
-        var audio = new Audio('Mario-coin-sound.mp3');
-        audio.play();
+        if(newscore!= -1){
+          document.getElementById("score").innerHTML= newscore.toString();
+          var audio = new Audio('Mario-coin-sound.mp3');
+          audio.play();
+        }
+        else{
+          document.getElementById("score").innerHTML= "0";
+        }
       }
 
     </script>
@@ -202,6 +235,7 @@
           </p>
           <div id="time">01:00</div><br>
           <button id="buttonStart">Start</button>
+          <p id="gameOver">Game Over</p>
         </header>
       </article>
     </div>
