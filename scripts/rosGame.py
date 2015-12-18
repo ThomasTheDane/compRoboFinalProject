@@ -55,37 +55,18 @@ class Neatobot:
         self.coinPixels = []
         self.coinVisible = True
         self.coinsInWorld = []
-        self.mudInWorld = []
+        self.spikesInWorld = []
         self.score=0
 
         rospy.Subscriber("STAR_pose_continuous",PoseStamped, self.processLocation)
         rospy.Subscriber("camera/camera_info", CameraInfo, self.get_camerainfo)
         self.score_pub = rospy.Publisher("score", Int32, queue_size=1)
-        self.vel_pub = rospy.Publisher("mud", Twist, queue_size=1)
+        #self.vel_pub = rospy.Publisher("mud", Twist, queue_size=1)
         """
         def processLocation(self,msg):
         A callBack function for STAR_pose_continuous which saves the location of the robot
         in the world coordinate system, calculates and save the angle of robot's Header
-        """
-    def checkScore(self, x,y):
-        padding = 0.2
-        for i, coin in enumerate(self.coinInWorld):
-            if abs(x-coin[0]) < padding and abs(y-coin[1]) < padding:
-                self.score+=1
-                self.coinInWorld.pop(i)
-                self.score_pub.publish(Int32(self.score))
-
-    def checkMud(self, x,y):
-        padding = 0.3
-        for i, mud in enumerate(self.mudInWorld):
-            if abs(x-coin[0]) < padding and abs(y-coin[1]) < padding:
-                velocity_msg = Twist(linear=Vector3(x-=.1))
-                self.vel_pub.publish(velocity_msg)
-
-    def checkStatus(self,x,y):
-        self.checkScore(x,y)
-        self.checkMud(x,y)
-        
+        """        
 
     def processLocation(self,msg):
         #from the STAR_pose_continuous, get the location of robot in world
@@ -109,9 +90,9 @@ class Neatobot:
                 self.coinsInWorld.pop(i)
                 self.score_pub.publish(Int32(self.score))
 
-    def checkMud(self, x,y):
+    def checkSpike(self, x,y):
         padding = 0.3
-        for i, mud in enumerate(self.mudInWorld):
+        for i, spike in enumerate(self.mudInWorld):
             if abs(x-coin[0]) < padding and abs(y-coin[1]) < padding:
                 velocity_msg = Twist(linear=Vector3(x-=.1))
                 self.vel_pub.publish(velocity_msg)
@@ -143,6 +124,11 @@ class Neatobot:
 
     def distanceBetween(self, pointA, pointB):
         return abs(math.sqrt(((pointB[0] - pointA[0])**2) + ((pointB[1] - pointA[1])**2)))
+
+
+    def startGame(self):
+        self.score = 0
+
 
         """
         def run(self):
