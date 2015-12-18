@@ -5,9 +5,9 @@
     <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
-    <script type="text/javascript" src="./adapter.js"></script>
-    <script type="text/javascript" src="./webrtc_ros.js"></script>
-    <script type="text/javascript" src="./viewer.js"></script>
+    <script type="text/javascript" src="/adapter.js"></script>
+    <script type="text/javascript" src="/webrtc_ros.js"></script>
+    <script type="text/javascript" src="/viewer.js"></script>
     <link rel="stylesheet" href="main.css" />
 
     <script type="text/javascript">
@@ -40,8 +40,8 @@
 
       var gameStatus = new ROSLIB.Topic({
         ros : ros,
-        name : '/game',
-        messageType : 'std_msgs/Bool'
+        name : '/gameStatus',
+        messageType : 'std_msgs/Int32'
       });
     //   // Subscribing to a Topic
     //   // ----------------------
@@ -55,45 +55,52 @@
       score.subscribe(function(message){
         console.log("score is " + message.data )
         updateScore(message.data)
-    if (message.data === -1){
-      $("#gameOver").show();
-    }
+ 		if (message.data === -1){
+ 			$("#gameOver").show();
+ 		}
       })
 
       $(document).ready(function(){
 
-      function startTimer(duration, display) {
-      var timer = duration, minutes, seconds;
 
-      var sessionInterval = setInterval(function () {
-          minutes = parseInt(timer / 60, 10)
-          seconds = parseInt(timer % 60, 10);
+ //      function startTimer(duration, display) {
+	//     var timer = duration, minutes, seconds;
 
-          minutes = minutes < 10 ? "0" + minutes : minutes;
-          seconds = seconds < 10 ? "0" + seconds : seconds;
+	//     var sessionInterval = setInterval(function () {
+	//         minutes = parseInt(timer / 60, 10)
+	//         seconds = parseInt(timer % 60, 10);
 
-          display.textContent = minutes + ":" + seconds;
+	//         minutes = minutes < 10 ? "0" + minutes : minutes;
+	//         seconds = seconds < 10 ? "0" + seconds : seconds;
 
-          if (--timer < 0) {
-              timer = duration;
-              $("#buttonStart").show();
-              var audio = new Audio('smb_mariodie.mp3');
-              audio.play();
-              $("#time").text("01:00")
-              clearInterval(sessionInterval);
-          }
-      }, 1000);
-  }
+	//         display.textContent = minutes + ":" + seconds;
 
-  $("#buttonStart").click(function(){
-      var oneMinute = 60,
-      display = document.querySelector('#time');
-      startTimer(oneMinute, display);
-      gameStatus.publish(Boolean(true)); //Check datatype
-      $("#buttonStart").hide();
-  })
+	//         if (--timer < 0) {
+	//             timer = duration;
+	//             $("#buttonStart").show();
+	//             var audio = new Audio('smb_mariodie.mp3');
+ //          		audio.play();
+	//             $("#time").text("01:00")
+	//             clearInterval(sessionInterval);
+ //              $("#gameOver").show();
 
-        $("#gameOver").hide();
+	//         }
+	//     }, 1000);
+	// }
+
+	// $("#buttonStart").click(function(){
+ //    $("#gameOver").hide();
+	//     var oneMinute = 5,
+	//     display = document.querySelector('#time');
+	//     startTimer(oneMinute, display);
+ //      var game = new ROSLIB.Message({
+ //        data : 1
+ //      })
+	//     gameStatus.publish(game); //Check datatype
+	//     $("#buttonStart").hide();
+	// })
+
+ //      	$("#gameOver").hide();
         // console.log("YOOOOOO")
         var up = false;
         var down = false;
@@ -187,6 +194,7 @@
           cmdVel.publish(twist);
         }, 50)
     });
+    
 
     </script>
 
@@ -194,16 +202,27 @@
       window.addEventListener("load", function(){
       }, false);
 
+      // 
+       // var audio = new Audio('mario.mp3');
+       //    audio.play();
       function updateScore(newscore){
         if(newscore!= -1){
           document.getElementById("score").innerHTML= newscore.toString();
           var audio = new Audio('Mario-coin-sound.mp3');
           audio.play();
+
+          if(newscore==5){
+            var audio = new Audio('clap.mp3');
+            audio.play();
+          }
         }
         else{
-          document.getElementById("score").innerHTML= "0";
+        	document.getElementById("score").innerHTML= "0";
+          var audio = new Audio('smb_mariodie.mp3');
+             audio.play();
         }
       }
+
 
     </script>
 
@@ -213,7 +232,8 @@
 
     <div class="row">
       <article class="6u 12u(mobile) special">
-        <video id="remote-video" autoplay="true"></video>         
+      <video id="remote-video" autoplay="true"></video>
+      <div id="config-box"></div>
       </article>
 
       <article class="6u 12u(mobile) special">
@@ -230,15 +250,16 @@
             Score  
           </p>
           <div id="score">0</div>
-          <p class=title>
+    <!--       <p class=title>
             Timer  
-          </p>
-          <div id="time">01:00</div><br>
-          <button id="buttonStart">Start</button>
-          <p id="gameOver">Game Over</p>
+          </p> -->
+          <!-- <div id="time">01:00</div><br> -->
+          <!-- <button id="buttonStart">Start</button> -->
+          <!-- <p id="gameOver">Game Over</p> -->
         </header>
       </article>
     </div>
     <div id="config-box"></div>
   </body>
 </html>
+
