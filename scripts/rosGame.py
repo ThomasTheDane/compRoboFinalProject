@@ -11,8 +11,8 @@ from neatoLocation_revised import MarkerProcessor
 from ar_pose.msg import ARMarkers
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
-from std_msgs.msg import Header, Int32
-from sensor_msgs.msg import CameraInfo
+from std_msgs.msg import Header, Int32  ,Bool
+from sensor_msgs.msg import CameraInfo, Image
 from tf import TransformListener, TransformBroadcaster
 from copy import deepcopy
 from math import sin, cos, pi, atan2, fabs
@@ -39,7 +39,7 @@ class Neatobot:
         self.rospack = rospkg.RosPack()
         self.bridge = CvBridge()                    # used to convert ROS messages to OpenCV
         rospy.Subscriber("/camera/image_raw", Image, self.process_image)
-        cv2.namedWindow('video_window')
+        # cv2.namedWindow('video_window')
         
         rospy.init_node('neato_bot')
         self.cv_image = None                        # the latest image from the camera    
@@ -61,9 +61,10 @@ class Neatobot:
 
         rospy.Subscriber("STAR_pose_continuous",PoseStamped, self.processLocation)
         rospy.Subscriber("camera/camera_info", CameraInfo, self.get_camerainfo)
+        # rospy.Subscriber("gameStatus", Int32, self.pressedStart)
         self.img_pub = rospy.Publisher("finalImage", Image, queue_size=10)
         self.score_pub = rospy.Publisher("score", Int32, queue_size=1)
-        self.vel_pub= rospy.Publisher("vel", Twist, queue_size=1)
+
         """
         def processLocation(self,msg):
         A callBack function for STAR_pose_continuous which saves the location of the robot
@@ -97,6 +98,8 @@ class Neatobot:
         for i, spike in enumerate(self.spikesInWorld):
             if abs(x-spike.midline[0]) < padding and abs(y-spike.midline[1]) < padding:
                 #TODO Send word to web that you've died 
+                self.score= -1
+                self.score_pub.publish(Int32(self.score))
                 self.startGame()
 
     def checkStatus(self,x,y):
@@ -132,9 +135,14 @@ class Neatobot:
     def distanceBetween(self, pointA, pointB):
         return abs(math.sqrt(((pointB[0] - pointA[0])**2) + ((pointB[1] - pointA[1])**2)))
     
+    # def pressedStart(self,msg):
+
+    #     print(msg)
+    #     if msg.data == 1: # msg data
+    #         startGame()
+
     def startGame(self):
         self.score = 0
-
         self.coinsInWorld = []
         self.spikesInWorld = []
 
@@ -189,7 +197,7 @@ class Neatobot:
                     aSprite.setK(self.K)
                     newImage = aSprite.addSpriteToView(newImage, [self.cx, self.cy, self.cz], self.theta)
 
-                cv2.imshow('video_window', newImage)
+                # cv2.imshow('video_window', newImage)
                 self.img_pub.publish(self.bridge.cv2_to_imgmsg(newImage, "bgr8"))    
                 cv2.waitKey(10)
             rospy.sleep(0.01)

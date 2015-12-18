@@ -162,7 +162,7 @@ class ARSprite:
             #print "spritePixels", spritePixels
             if self.spriteVisible:
                 for aPixel in spritePixels:
-                    cv2.circle(destinationImage,(int(aPixel[0]), int(aPixel[1])), 5, (0, 0, 255))
+                    # cv2.circle(destinationImage,(int(aPixel[0]), int(aPixel[1])), 5, (0, 0, 255))
                     toCoor.append([int(aPixel[0]), int(aPixel[1])])
                 #print type(spritePixels)
                 destinationImage = self.warpAndCombine(self.image, toCoor, destinationImage)
