@@ -106,7 +106,7 @@ class ARSprite:
 
         finalImage = destinationImage
 
-        if newWidth < 0 or newHeight < 0:
+        if newWidth < 0 or newHeight < 0 or newWidth > 5000 or newHeight > 5000:
             return finalImage
 
         warpedImage = cv2.warpPerspective(sourceImage, M, (newWidth, newHeight))

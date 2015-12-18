@@ -121,11 +121,20 @@ class Neatobot:
         width = 0.2 
         return np.array([[[center[0]],[center[1]],[0],[1]],[[center[0]],[center[1]],[width],[1]],[[center[0]],[center[1]+width],[0],[1]],[[center[0]],[center[1]+width],[width],[1]]],dtype='float32')
 
+    def centerToFloor(self, center):
+        width = 0.2
+        change = width/2
+        return np.array([[[center[0]-change],[center[1]-change],[-.1],[1]],[[center[0]+change],[center[1]-change],[-.1],[1]],[[center[0]-change],[center[1]+change],[-.1],[1]],[[center[0]+change],[center[1]+change],[-.1],[1]]],dtype='float32')
+
+
     def distanceBetween(self, pointA, pointB):
         return abs(math.sqrt(((pointB[0] - pointA[0])**2) + ((pointB[1] - pointA[1])**2)))
 
     def startGame(self):
         self.score = 0
+
+        self.coinsInWorld = []
+        self.spikesInWorld = []
 
         # place 5 random coins in 3x3 space 
         for i in range(0, 5):
@@ -138,7 +147,7 @@ class Neatobot:
 
         # place 3 randomly placed spikes 
         for i in range(0,3):
-            spike_image_path = "/scripts/spike.jpg"
+            spike_image_path = "/scripts/spike.png"
             spike_coordinate = [random.uniform(0,3), random.uniform(-3,0)]
             valid_coordinate = False
             while not valid_coordinate:
@@ -148,7 +157,7 @@ class Neatobot:
                         spike_coordinate = [random.uniform(0,3), random.uniform(0,3)]
                         break
                 valid_coordinate = True
-            arSpikeSprite = ARSprite(self.centerToCorners(spike_coordinate), spike_image_path)
+            arSpikeSprite = ARSprite(self.centerToFloor(spike_coordinate), spike_image_path)
             self.spikesInWorld.append(arSpikeSprite)
 
         """
@@ -181,6 +190,7 @@ class Neatobot:
 
                 cv2.imshow('video_window', newImage)
                 cv2.waitKey(10)
+            rospy.sleep(0.01)
 
                 
 if __name__ == '__main__':
