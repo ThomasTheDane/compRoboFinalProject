@@ -12,11 +12,9 @@
     height: 100px;
     border: none;
   }
-
   #forward{
     margin-left: 106px;
   }
-
   #back{
     margin-left: 106px;
   }
@@ -26,84 +24,75 @@
 <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
 <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
 <script type="text/javascript" type="text/javascript">
-
-
   // Connecting to ROS
   // -----------------
-
   const GLOBAL = {
     x : 0,
     y : 0, 
     z : 0
   }; 
-
   var ros = new ROSLIB.Ros({
     url : 'ws://localhost:9090'
   });
-
   ros.on('connection', function() {
     console.log('Connected to websocket server.');
   });
-
   ros.on('error', function(error) {
     console.log('Error connecting to websocket server: ', error);
   });
-
   ros.on('close', function() {
     console.log('Connection to websocket server closed.');
   });
-
   // Publishing a Topic
   // ------------------
-
   var cmdVel = new ROSLIB.Topic({
     ros : ros,
     name : '/cmd_vel',
     messageType : 'geometry_msgs/Twist'
   });
-
-
   // Subscribing to a Topic
   // ----------------------
-
   var starPose = new ROSLIB.Topic({
     ros: ros,
-    name: '/STAR_pose',
+    name: '/cam_up/STAR_pose',
     messageType : 'geometry_msgs/PoseStamped'
 //    name: '/camera/image_raw',
 //    messageType : 'sensor_msgs/Image'
   })
-
-   var eulerAngle = new ROSLIB.Topic({
+ var eulerAngle = new ROSLIB.Topic({
     ros: ros,
-    name: '/STAR_pose_euler_angle',
+    name: '/cam_up/STAR_pose_euler_angle',
     messageType : 'geometry_msgs/Vector3'
 //    name: '/camera/image_raw',
 //    messageType : 'sensor_msgs/Image'
   })
-
+  var score = new ROSLIB.Topic({
+   ros: ros,
+   name: '/cam_up/score',
+   messageType : 'std_msgs/Int32'
+//    name: '/camera/image_raw',
+//    messageType : 'sensor_msgs/Image'
+ })
   starPose.subscribe(function(message){
-   
-    //console.log('Received message on' + starPose.name + ': ' + message.pose);
-    GLOBAL.x = message.pose.position.x
-    GLOBAL.y = message.pose.position.y
-    // debugger;
-    drawVector(GLOBAL.x,GLOBAL.y, GLOBAL.z)
+    console.log('starpose ' + starPose.name + ': ' + message.pose);
+    console.log("data is " + message.data)
   })
-
+  score.subscribe(function(message){
+    console.log("score is " + message.data )
+    updateScore(message.data)
+  })
   eulerAngle.subscribe(function(message){
+    console.log("eulerAngle is " + message.data)
     GLOBAL.z = message.z
     drawVector(GLOBAL.x,GLOBAL.y, GLOBAL.z)
     // console.log('Received message on' + eulerAngle.name + ': ' + message);
   })
-
   $(document).ready(function(){
     var up = false;
     var down = false;
     var right = false;
     var left = false;
     var speed = 0.0;
-
     var twist = new ROSLIB.Message({
       linear : {
         x : 0.0,
@@ -117,28 +106,22 @@
       }
     });
     cmdVel.publish(twist);
-
     $("#forward").mouseenter(function(){
       console.log('forward');
       up = true;
     });
-
     $("#back").hover(function(){
       console.log('back');
       down = true;
     });
-
     $("#right").hover(function(){
       console.log('right');
       right = true;
     });
-
     $("#left").hover(function(){
       console.log('left');
       left = true;
     });
-
-
     $(".button").mouseleave(function(){
       console.log('stop');
       up = false;
@@ -146,7 +129,6 @@
       right = false;
       left = false;
     });
-
     $("#slider").slider();
     var startPos = '$("#slider").slider("value");', 
         endPos = '';
@@ -159,18 +141,15 @@
         }
         startPos = endPos;
     });
-
     setInterval(function(){
       var linearX = 0.0;
       var angularZ = 0.0;
-
       if(up){
         linearX = speed;
         $('#forward').attr("src", "img/topH.png")
       }else{
         $('#forward').attr("src", "img/top.png")
       }
-
       if(down){
         linearX = -speed;
         linearX = -0.5;
@@ -178,21 +157,18 @@
       }else{
         $('#back').attr("src", "img/down.png")
       }
-
       if(right){
         angularZ = -speed;
         $('#right').attr("src", "img/rightH.png")
       }else{
         $('#right').attr("src", "img/right.png")
       }
-
       if(left){
         angularZ = speed;
         $('#left').attr("src", "img/leftH.png")
       }else{
         $('#left').attr("src", "img/left.png")
       }
-
       twist = new ROSLIB.Message({
         linear : {
           x : linearX,
@@ -213,10 +189,13 @@
 <script>
   window.addEventListener("load", function(){
     
-
     //drawVector(100, 100,0, gameContext);
   }, false);
-
+  function updateScore(newscore){
+    document.getElementById("score").innerHTML= newscore.toString();
+    var audio = new Audio('Mario-coin-sound.mp3');
+  audio.play();
+  }
   function drawVector(x, y, angle){
     var gameCanvas = document.getElementById("gameCanvas");
     var gameContext = gameCanvas.getContext("2d");
@@ -226,15 +205,12 @@
     var dist = 20;
     // var bottomLeftY = -gameContext.canvas.height/2;
     // var bottomLeftX = -gameContext.canvas.width/2;
-
     var startX = x+(gameContext.canvas.width/2);
     var startY = y+(gameContext.canvas.height/2);
-
     console.log(startX, startY);
     gameContext.beginPath();
     gameContext.moveTo(startX,startY);
     gameContext.lineTo(startX+dist*Math.cos(angle), startY+dist*(Math.sin(angle)));
-
     gameContext.stroke();
     gameContext.fill();
     //gameContext.lineTo(x + Math.cos(angle)*10, y + Math.sin(angle)*10)
@@ -244,8 +220,11 @@
 
 <body>
 
-  <h1>Simple roslib Example</h1>
-  <p>Check your Web Console for output.</p>
+  <img src="./scripts/logo.png" width="300">
+  <h1>Game of Renegades</h1>
+  <p>Play with our robots to collect coins as fast as you can</p>
+  <div id="score">0</div>
+
   <img src="img/top.png" id="forward" class="button"></img>
   <br>
   <img src="img/left.png" id="left" class="button"></img>
@@ -261,7 +240,7 @@
   <div id="slider"></div>
 
   <canvas id="gameCanvas" height="500" width="500" style="border: 1px solid grey">
-
   </canvas>
+
 </body>
 </html>
